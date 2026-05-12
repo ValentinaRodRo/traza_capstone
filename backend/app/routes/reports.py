@@ -8,3 +8,7 @@ router = APIRouter(prefix="/reports", tags=["Reports"])
 @router.post("/")
 def create_new_report(report: ReportCreate):
     return create_report(report)
+
+@router.get("/")
+def get_reports(db: Session = Depends(get_db)):
+    return report_service.get_reports(db)
