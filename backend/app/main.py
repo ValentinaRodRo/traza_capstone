@@ -2,8 +2,17 @@ from fastapi import FastAPI
 from app.routes.reports import router as reports_router
 from app.database import engine, Base
 from app.models.report_model import Report
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 Base.metadata.create_all(bind=engine)
 
 app.include_router(reports_router)
