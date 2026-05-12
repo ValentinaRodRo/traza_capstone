@@ -15,3 +15,6 @@ def create_report(data):
     reports.append(report)
 
     return report
+
+def get_reports(db: Session):
+    return db.query(Report).all()
