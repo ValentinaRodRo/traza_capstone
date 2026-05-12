@@ -8,6 +8,8 @@ class Report(Base):
     __tablename__ = "reports"
 
     id = Column(Integer, primary_key=True, index=True)
+    tracking_code = Column(String, unique=True, index=True)
+    
     incident_type = Column(String)
     description = Column(String)
     latitude = Column(Float)

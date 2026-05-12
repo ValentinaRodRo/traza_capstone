@@ -17,8 +17,16 @@ def create_new_report(report: ReportCreate, db: Session = Depends(get_db)):
 
 
 @router.get("/")
-def list_reports(db: Session = Depends(get_db)):
-    return get_reports(db)
+def list_reports(
+    status: str = None,
+    incident_type: str = None,
+    db: Session = Depends(get_db)
+):
+    return get_reports(
+        db,
+        status,
+        incident_type
+    )
 
 @router.put("/{report_id}")
 def update_report(
