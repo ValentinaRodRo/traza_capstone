@@ -34,3 +34,15 @@ def update_report_status(db: Session, report_id: int, status: str):
     db.refresh(report)
 
     return report
+
+def delete_report(db: Session, report_id: int):
+
+    report = db.query(Report).filter(Report.id == report_id).first()
+
+    if not report:
+        return None
+
+    db.delete(report)
+    db.commit()
+
+    return True
