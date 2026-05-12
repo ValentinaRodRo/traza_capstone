@@ -1,3 +1,14 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+
+# Node
+node_modules/
+dist
+dist-ssr
+*.local
+
 # Logs
 logs
 *.log
@@ -7,16 +18,17 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
-
-# Editor directories and files
+# VS Code
 .vscode/*
 !.vscode/extensions.json
+
+# IDEs
 .idea
+
+# Mac
 .DS_Store
+
+# Visual Studio
 *.suo
 *.ntvs*
 *.njsproj
