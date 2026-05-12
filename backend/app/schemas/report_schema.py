@@ -7,3 +7,6 @@ class ReportCreate(BaseModel):
     latitude: float
     longitude: float
     anonymous: bool = True
+
+class ReportUpdate(BaseModel):
+    status: str
