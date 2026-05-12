@@ -21,3 +21,16 @@ def create_report(db: Session, data):
 
 def get_reports(db: Session):
     return db.query(Report).all()
+
+def update_report_status(db: Session, report_id: int, status: str):
+    report = db.query(Report).filter(Report.id == report_id).first()
+
+    if not report:
+        return None
+
+    report.status = status
+
+    db.commit()
+    db.refresh(report)
+
+    return report
