@@ -1,4 +1,6 @@
-from sqlalchemy import Column, Integer, String, Float, Boolean
+from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime
+from datetime import datetime
+
 from app.database import Base
 
 
@@ -12,3 +14,5 @@ class Report(Base):
     longitude = Column(Float)
     anonymous = Column(Boolean)
     status = Column(String)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
