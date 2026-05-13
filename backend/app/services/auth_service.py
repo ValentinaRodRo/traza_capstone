@@ -13,13 +13,14 @@ def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
 
 
-def create_user(db: Session, email: str, password: str):
+def create_user(db: Session, email: str, password: str, role: str = "citizen"):
 
     hashed = hash_password(password)
 
     user = User(
         email=email,
-        password=hashed
+        password=hashed,
+        role=role
     )
 
     db.add(user)
