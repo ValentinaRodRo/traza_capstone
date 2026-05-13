@@ -1,26 +1,41 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Security
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.schemas.report_schema import ReportCreate
-from app.services.report_service import create_report, get_reports
-from app.schemas.report_schema import ReportUpdate
-from app.services.report_service import update_report_status
+from app.schemas.report_schema import ReportCreate, ReportUpdate
+from app.services.report_service import (
+    create_report,
+    get_reports,
+    update_report_status
+)
 from app.models.report_model import Report
+from app.utils.auth_bearer import JWTBearer
 
-router = APIRouter(prefix="/reports", tags=["Reports"])
+router = APIRouter(
+    prefix="/reports",
+    tags=["Reports"]
+)
 
 
 @router.post("/")
-def create_new_report(report: ReportCreate, db: Session = Depends(get_db)):
-    return create_report(db, report)
+def create_new_report(
+    report: ReportCreate,
+    db: Session = Depends(get_db),
+    user=Security(JWTBearer())
+):
+    return create_report(
+    db,
+    report,
+    user["user_id"]
+)
 
 
 @router.get("/")
 def list_reports(
     status: str = None,
     incident_type: str = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user=Security(JWTBearer())
 ):
     return get_reports(
         db,
@@ -28,11 +43,13 @@ def list_reports(
         incident_type
     )
 
+
 @router.put("/{report_id}")
 def update_report(
     report_id: int,
     report_data: ReportUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user=Security(JWTBearer())
 ):
     report = update_report_status(
         db,
@@ -45,10 +62,17 @@ def update_report(
 
     return report
 
-@router.delete("/{report_id}")
-def delete_report(report_id: int, db: Session = Depends(get_db)):
 
-    report = db.query(Report).filter(Report.id == report_id).first()
+@router.delete("/{report_id}")
+def delete_report(
+    report_id: int,
+    db: Session = Depends(get_db),
+    user=Security(JWTBearer())
+):
+
+    report = db.query(Report).filter(
+        Report.id == report_id
+    ).first()
 
     if not report:
         return {"error": "Reporte no encontrado"}
@@ -56,4 +80,6 @@ def delete_report(report_id: int, db: Session = Depends(get_db)):
     db.delete(report)
     db.commit()
 
-    return {"message": "Reporte eliminado correctamente"}
+    return {
+        "message": "Reporte eliminado correctamente"
+    }
