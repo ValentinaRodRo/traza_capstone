@@ -6,6 +6,7 @@ from app.schemas.report_schema import ReportCreate, ReportUpdate
 from app.services.report_service import (
     create_report,
     get_reports,
+    get_user_reports,
     update_report_status
 )
 from app.models.report_model import Report
@@ -21,12 +22,12 @@ router = APIRouter(
 def create_new_report(
     report: ReportCreate,
     db: Session = Depends(get_db),
-    user=Security(JWTBearer())
+    payload=Security(JWTBearer())
 ):
     return create_report(
     db,
     report,
-    user["user_id"]
+    payload["user_id"]
 )
 
 
@@ -41,6 +42,16 @@ def list_reports(
         db,
         status,
         incident_type
+    )
+
+@router.get("/my-reports")
+def my_reports(
+    db: Session = Depends(get_db),
+    payload=Security(JWTBearer())
+):
+    return get_user_reports(
+        db,
+        payload["user_id"]
     )
 
 
