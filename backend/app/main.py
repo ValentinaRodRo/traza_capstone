@@ -3,6 +3,8 @@ from app.routes.reports import router as reports_router
 from app.database import engine, Base
 from app.models.report_model import Report
 from fastapi.middleware.cors import CORSMiddleware
+from app.models.user_model import User
+from app.routes.auth import router as auth_router
 
 app = FastAPI()
 app.add_middleware(
@@ -16,6 +18,7 @@ app.add_middleware(
 Base.metadata.create_all(bind=engine)
 
 app.include_router(reports_router)
+app.include_router(auth_router)
 
 
 @app.get("/")

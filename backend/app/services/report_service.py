@@ -12,7 +12,11 @@ def generate_tracking_code(db: Session):
     return f"CHI-{year}-{count:04d}"
 
 
-def create_report(db: Session, data):
+def create_report(
+    db: Session,
+    data,
+    user_id: int
+):
     report = Report(
         tracking_code=generate_tracking_code(db),
         incident_type=data.incident_type,
@@ -20,7 +24,8 @@ def create_report(db: Session, data):
         latitude=data.latitude,
         longitude=data.longitude,
         anonymous=data.anonymous,
-        status="recibido"
+        status="recibido",
+        user_id=user_id
     )
 
     db.add(report)
@@ -46,6 +51,14 @@ def get_reports(
         )
 
     return query.all()
+
+def get_user_reports(
+    db: Session,
+    user_id: int
+):
+    return db.query(Report).filter(
+        Report.user_id == user_id
+    ).all()
 
 def update_report_status(db: Session, report_id: int, status: str):
     report = db.query(Report).filter(Report.id == report_id).first()
