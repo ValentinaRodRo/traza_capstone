@@ -36,8 +36,12 @@ def list_reports(
     status: str = None,
     incident_type: str = None,
     db: Session = Depends(get_db),
-    user=Security(JWTBearer())
+    payload=Security(JWTBearer())
 ):
+
+    if payload["role"] != "authority":
+        return {"error": "No autorizado"}
+
     return get_reports(
         db,
         status,
@@ -60,8 +64,12 @@ def update_report(
     report_id: int,
     report_data: ReportUpdate,
     db: Session = Depends(get_db),
-    user=Security(JWTBearer())
+    payload=Security(JWTBearer())
 ):
+
+    if payload["role"] != "authority":
+        return {"error": "No autorizado"}
+
     report = update_report_status(
         db,
         report_id,
@@ -78,8 +86,11 @@ def update_report(
 def delete_report(
     report_id: int,
     db: Session = Depends(get_db),
-    user=Security(JWTBearer())
+    payload=Security(JWTBearer())
 ):
+
+    if payload["role"] != "authority":
+        return {"error": "No autorizado"}
 
     report = db.query(Report).filter(
         Report.id == report_id
