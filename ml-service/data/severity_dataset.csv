@@ -1,0 +1,8 @@
+description,category,severity
+"Dos hombres armados persiguiendo personas",robo,critico
+"Intentaron robar una moto",robo,alto
+"Rayaron las paredes del parque",vandalismo,bajo
+"Pelea fuerte afuera de un bar",violencia,alto
+"Persona sospechosa siguiendo estudiantes",actividad_sospechosa,medio
+"Daños menores en una señal de tránsito",vandalismo,bajo
+"Grupo agresivo amenazando personas",violencia,critico
