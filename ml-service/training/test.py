@@ -4,15 +4,10 @@ import spacy
 import unicodedata
 import re
 
-model = joblib.load(
-    "../models/severity_classifier.pkl"
-)
+# Load Spanish model
+nlp = spacy.load("es_core_news_sm")
 
-nlp = spacy.load(
-    "es_core_news_sm"
-)
-
-
+# Normalize text
 def normalize_text(text):
 
     text = text.lower()
@@ -35,7 +30,7 @@ def normalize_text(text):
 
     return text
 
-
+# Clean text
 def clean_spanish_text(text):
 
     text = normalize_text(text)
@@ -58,45 +53,39 @@ def clean_spanish_text(text):
 
     return " ".join(tokens)
 
+# Load model
+model = joblib.load(
+    "../models/severity_classifier.pkl"
+)
 
-def process_report(report):
+# Example report
+description = (
+    "Dos hombres armados persiguiendo estudiantes"
+)
 
-    clean_text = clean_spanish_text(
-        report["description"]
-    )
+clean_text = clean_spanish_text(
+    description
+)
 
-    input_df = pd.DataFrame([{
-        "clean_description":
-            clean_text,
+report = pd.DataFrame([{
+    "clean_description": clean_text,
+    "category": "robo"
+}])
 
-        "category":
-            report["category"]
-    }])
+# Predict
+prediction = model.predict(
+    report
+)[0]
 
-    prediction = model.predict(
-        input_df
+# Confidence
+confidence = max(
+    model.predict_proba(
+        report
     )[0]
+)
 
-    confidence = max(
-        model.predict_proba(
-            input_df
-        )[0]
-    )
+print("\nPrediction:")
+print(prediction)
 
-    return {
-
-        "severity":
-            prediction,
-
-        "confidence":
-            round(
-                float(confidence),
-                2
-            ),
-
-        "zone":
-            "A1",
-
-        "risk_score":
-            0.72
-    }
+print("\nConfidence:")
+print(round(confidence, 2))
