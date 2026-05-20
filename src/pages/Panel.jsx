@@ -4,33 +4,75 @@ import ReportCard from '../components/ui/ReportCard';
 import { statsData, tendenciaData } from '../data/mockData';
 import { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-
+import { processReport }
+from "../services/mlService";
 export default function Panel() {
 
   const [reportes, setReportes] = useState([]);
 
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/reports/")
-      .then((response) => response.json())
-      .then((data) => {
 
-        const reportesFormateados = data.map((r) => ({
-          id: `#REP-${r.id}`,
-          tipo: r.incident_type,
-          ubicacion: "Ubicación reportada",
-          desc: r.description,
-          estado: r.status,
-          hora: "Ahora",
-          confianza: r.anonymous ? "anonimo" : "registrado",
-          coincidentes: 0,
-          obs: "",
-        }));
+  fetch("http://127.0.0.1:8000/reports/")
+    .then((response) => response.json())
 
-        setReportes(reportesFormateados);
-      })
-      .catch((error) => console.error(error));
-  }, []);
+    .then(async (data) => {
 
+      const reportesFormateados =
+        await Promise.all(
+
+          data.map(async (r) => {
+
+            // Send report to ML API
+            const prediction =
+              await processReport({
+                tipo: r.incident_type,
+                desc: r.description,
+              });
+
+            return {
+
+              id: `#REP-${r.id}`,
+
+              tipo: r.incident_type,
+
+              ubicacion:
+                "Ubicación reportada",
+
+              desc: r.description,
+
+              estado: r.status,
+
+              hora: "Ahora",
+
+              confianza:
+                r.anonymous
+                ? "anonimo"
+                : "registrado",
+
+              coincidentes: 0,
+
+              obs: "",
+
+              // AI prediction
+              aiSeverity:
+                prediction.severity,
+
+              aiConfidence:
+                prediction.confidence,
+            };
+          })
+        );
+
+      setReportes(
+        reportesFormateados
+      );
+    })
+
+    .catch((error) =>
+      console.error(error)
+    );
+
+}, []);
   return (
     <div>
       <TopBar title="Panel de reportes" />
@@ -87,6 +129,14 @@ export default function Panel() {
               <ReportCard
                 key={r.id}
                 reporte={r}
+
+                aiSeverity={
+                  r.aiSeverity
+                }
+
+                aiConfidence={
+                  r.aiConfidence
+                }
               />
             ))}
           </div>
