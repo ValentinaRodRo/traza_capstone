@@ -3,15 +3,23 @@ from app.models.report_model import Report
 from datetime import datetime
 from app.models.notification_model import Notification
 from app.models.user_model import User
+from app.utils.report_status import ReportStatus
 
 
 def generate_tracking_code(db: Session):
 
     year = datetime.utcnow().year
 
-    count = db.query(Report).count() + 1
+    last_report = db.query(Report).order_by(
+        Report.id.desc()
+    ).first()
 
-    return f"CHI-{year}-{count:04d}"
+    next_number = 1
+
+    if last_report:
+        next_number = last_report.id + 1
+
+    return f"CHI-{year}-{next_number:04d}"
 
 
 def create_report(
@@ -26,7 +34,7 @@ def create_report(
         latitude=data.latitude,
         longitude=data.longitude,
         anonymous=data.anonymous,
-        status="recibido",
+        status=ReportStatus.RECEIVED.value,
         user_id=user_id
     )
 
@@ -83,13 +91,26 @@ def get_user_reports(
         Report.user_id == user_id
     ).all()
 
-def update_report_status(db: Session, report_id: int, status: str):
-    report = db.query(Report).filter(Report.id == report_id).first()
+def update_report_status(
+    db: Session,
+    tracking_code: str,
+    status: ReportStatus
+):
+    report = db.query(Report).filter(
+        Report.tracking_code == tracking_code
+    ).first()
 
     if not report:
         return None
 
     report.status = status
+
+    notification = Notification(
+        user_id=report.user_id,
+        message=f"Tu reporte {report.tracking_code} cambió a estado {status}"
+    )
+
+    db.add(notification)
 
     db.commit()
     db.refresh(report)
