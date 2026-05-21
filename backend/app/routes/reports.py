@@ -59,9 +59,9 @@ def my_reports(
     )
 
 
-@router.put("/{report_id}")
+@router.put("/{tracking_code}/status")
 def update_report(
-    report_id: int,
+    tracking_code: str,
     report_data: ReportUpdate,
     db: Session = Depends(get_db),
     payload=Security(JWTBearer())
@@ -72,7 +72,7 @@ def update_report(
 
     report = update_report_status(
         db,
-        report_id,
+        tracking_code,
         report_data.status
     )
 
