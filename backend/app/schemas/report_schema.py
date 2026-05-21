@@ -10,3 +10,4 @@ class ReportCreate(BaseModel):
 
 class ReportUpdate(BaseModel):
     status: str
+    comment: str
