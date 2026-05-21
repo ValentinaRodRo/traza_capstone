@@ -72,17 +72,48 @@ def get_reports(
     status: str = None,
     incident_type: str = None
 ):
+
     query = db.query(Report)
 
     if status:
-        query = query.filter(Report.status == status)
+        query = query.filter(
+            Report.status == status
+        )
 
     if incident_type:
         query = query.filter(
             Report.incident_type == incident_type
         )
 
-    return query.all()
+    reports = query.all()
+
+    response = []
+
+    for report in reports:
+
+        report_data = {
+            "tracking_code": report.tracking_code,
+            "incident_type": report.incident_type,
+            "description": report.description,
+            "latitude": report.latitude,
+            "longitude": report.longitude,
+            "status": report.status,
+            "anonymous": report.anonymous,
+            "created_at": report.created_at
+        }
+
+        if not report.anonymous:
+
+            user = db.query(User).filter(
+                User.id == report.user_id
+            ).first()
+
+            report_data["citizen_name"] = user.name
+            report_data["citizen_email"] = user.email
+
+        response.append(report_data)
+
+    return response
 
 def get_user_reports(
     db: Session,
