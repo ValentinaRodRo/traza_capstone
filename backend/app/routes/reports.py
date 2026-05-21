@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Security
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.schemas.report_schema import ReportCreate, ReportUpdate
+from app.schemas.report_schema import (ReportCreate, ReportUpdate, ReportResponse)
 from app.services.report_service import (
     create_report,
     get_reports,
@@ -19,7 +19,7 @@ router = APIRouter(
 )
 
 
-@router.post("/")
+@router.post("/", response_model=ReportResponse)
 def create_new_report(
     report: ReportCreate,
     db: Session = Depends(get_db),
