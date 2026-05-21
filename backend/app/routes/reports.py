@@ -7,7 +7,8 @@ from app.services.report_service import (
     create_report,
     get_reports,
     get_user_reports,
-    update_report_status
+    update_report_status,
+    get_report_history
 )
 from app.models.report_model import Report
 from app.utils.auth_bearer import JWTBearer
@@ -73,7 +74,9 @@ def update_report(
     report = update_report_status(
         db,
         tracking_code,
-        report_data.status
+        report_data.status,
+        report_data.comment,
+        payload["user_id"]
     )
 
     if not report:
@@ -105,3 +108,19 @@ def delete_report(
     return {
         "message": "Reporte eliminado correctamente"
     }
+
+@router.get("/{tracking_code}/history")
+def report_history(
+    tracking_code: str,
+    db: Session = Depends(get_db),
+    payload=Security(JWTBearer())
+):
+    history = get_report_history(
+        db,
+        tracking_code
+    )
+
+    if not history:
+        return {"error": "Historial no encontrado"}
+
+    return history

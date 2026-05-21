@@ -7,6 +7,7 @@ from app.models.user_model import User
 from app.models.notification_model import Notification
 from app.routes.auth import router as auth_router
 from app.routes.notifications import router as notifications_router
+from app.models.report_history_model import ReportHistory
 
 app = FastAPI()
 app.add_middleware(
