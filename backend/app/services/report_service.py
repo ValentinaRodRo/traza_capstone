@@ -4,6 +4,7 @@ from datetime import datetime
 from app.models.notification_model import Notification
 from app.models.user_model import User
 from app.utils.report_status import ReportStatus
+from app.models.report_history_model import ReportHistory
 
 
 def generate_tracking_code(db: Session):
@@ -94,7 +95,9 @@ def get_user_reports(
 def update_report_status(
     db: Session,
     tracking_code: str,
-    status: ReportStatus
+    status: str,
+    comment: str,
+    authority_id: int
 ):
     report = db.query(Report).filter(
         Report.tracking_code == tracking_code
@@ -107,8 +110,17 @@ def update_report_status(
 
     notification = Notification(
         user_id=report.user_id,
-        message=f"Tu reporte {report.tracking_code} cambió a estado {status}"
+        message=f"Tu reporte {report.tracking_code} cambió a estado {status}. Comentario: {comment}"
     )
+
+    history = ReportHistory(
+        report_id=report.id,
+        status=status,
+        comment=comment,
+        created_by=authority_id
+    )
+
+    db.add(history)
 
     db.add(notification)
 
@@ -128,3 +140,20 @@ def delete_report(db: Session, report_id: int):
     db.commit()
 
     return True
+
+def get_report_history(
+    db: Session,
+    tracking_code: str
+):
+    report = db.query(Report).filter(
+        Report.tracking_code == tracking_code
+    ).first()
+
+    if not report:
+        return None
+
+    history = db.query(ReportHistory).filter(
+        ReportHistory.report_id == report.id
+    ).all()
+
+    return history
