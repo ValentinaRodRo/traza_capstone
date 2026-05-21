@@ -4,7 +4,9 @@ from app.database import engine, Base
 from app.models.report_model import Report
 from fastapi.middleware.cors import CORSMiddleware
 from app.models.user_model import User
+from app.models.notification_model import Notification
 from app.routes.auth import router as auth_router
+from app.routes.notifications import router as notifications_router
 
 app = FastAPI()
 app.add_middleware(
@@ -19,6 +21,7 @@ Base.metadata.create_all(bind=engine)
 
 app.include_router(reports_router)
 app.include_router(auth_router)
+app.include_router(notifications_router)
 
 
 @app.get("/")

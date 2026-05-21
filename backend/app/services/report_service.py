@@ -1,6 +1,8 @@
 from sqlalchemy.orm import Session
 from app.models.report_model import Report
 from datetime import datetime
+from app.models.notification_model import Notification
+from app.models.user_model import User
 
 
 def generate_tracking_code(db: Session):
@@ -31,6 +33,27 @@ def create_report(
     db.add(report)
     db.commit()
     db.refresh(report)
+    notification = Notification(
+        user_id=user_id,
+        message=f"Tu reporte {report.tracking_code} fue creado correctamente"
+    )
+
+    db.add(notification)
+
+    authorities = db.query(User).filter(
+        User.role == "authority"
+    ).all()
+
+    for authority in authorities:
+
+        admin_notification = Notification(
+            user_id=authority.id,
+            message=f"Nuevo reporte de {report.incident_type} creado con código {report.tracking_code}"
+        )
+
+        db.add(admin_notification)
+
+    db.commit()
 
     return report
 
