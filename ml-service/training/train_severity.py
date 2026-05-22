@@ -1,20 +1,25 @@
+import random
 import pandas as pd
 import joblib
+from sklearn.compose import ColumnTransformer
 import spacy
 import unicodedata
 import re
 
 from sklearn.pipeline import Pipeline
-from sklearn.compose import ColumnTransformer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.preprocessing import OneHotEncoder
-from sklearn.linear_model import LogisticRegression
+from sklearn.svm import LinearSVC
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
 
-# Load Spanish NLP model
-nlp = spacy.load("es_core_news_sm")
+# =========================
+# LOAD SPANISH NLP
+# =========================
 
+nlp = spacy.load(
+    "es_core_news_sm"
+)
 
 # =========================
 # TEXT NORMALIZATION
@@ -44,9 +49,61 @@ def normalize_text(text):
 
     return text
 
+# =========================
+# NOISE / SLANG
+# =========================
+
+def add_noise(text):
+
+    replacements = {
+
+        "celular": [
+            "celu",
+            "telefono",
+            "movil"
+        ],
+
+        "persona": [
+            "sujeto",
+            "tipo",
+            "individuo",
+            "man"
+        ],
+
+        "robo": [
+            "hurto",
+            "atraco"
+        ],
+
+        "bicicleta": [
+            "bici"
+        ],
+
+        "parque": [
+            "parquecito"
+        ],
+
+        "moto": [
+            "motocicleta"
+        ]
+    }
+
+    for word, options in replacements.items():
+
+        if (
+            word in text
+            and random.random() < 0.35
+        ):
+
+            text = text.replace(
+                word,
+                random.choice(options)
+            )
+
+    return text
 
 # =========================
-# SPANISH CLEANING
+# CLEAN SPANISH TEXT
 # =========================
 
 def clean_spanish_text(text):
@@ -71,16 +128,26 @@ def clean_spanish_text(text):
 
     return " ".join(tokens)
 
-
 # =========================
 # LOAD DATASET
 # =========================
 
 df = pd.read_csv(
-    "../data/severity_dataset.csv"
+    "synthetic_chia_reports.csv"
 )
 
-# Clean category column
+# =========================
+# ADD MORE LANGUAGE VARIETY
+# =========================
+
+df["description"] = df[
+    "description"
+].apply(add_noise)
+
+# =========================
+# CLEAN CATEGORIES
+# =========================
+
 df["category"] = (
     df["category"]
     .astype(str)
@@ -88,37 +155,65 @@ df["category"] = (
     .str.strip()
 )
 
-# Clean text descriptions
+# =========================
+# CLEAN DESCRIPTIONS
+# =========================
+
 df["clean_description"] = df[
     "description"
 ].apply(clean_spanish_text)
 
-# Optional debug
-print("Unique categories:")
-print(df["category"].unique())
+# =========================
+# DEBUG
+# =========================
 
+print("\nUnique categories:\n")
+
+print(
+    df["category"].unique()
+)
 
 # =========================
 # FEATURES / TARGET
 # =========================
 
-X = df[
-    ["clean_description", "category"]
-]
+X = df[[
+    "clean_description",
+    "category"
+]]
 
 y = df["severity"]
 
+# =========================
+# TRAIN / TEST SPLIT
+# =========================
+
+X_train, X_test, y_train, y_test = train_test_split(
+
+    X,
+    y,
+
+    test_size=0.2,
+
+    random_state=42,
+
+    stratify=y
+)
 
 # =========================
-# PREPROCESSING
+# PIPELINE
 # =========================
-
 preprocessor = ColumnTransformer([
     (
         "text",
-        TfidfVectorizer(),
+        TfidfVectorizer(
+            ngram_range=(1, 2),
+            min_df=2,
+            max_df=0.95
+        ),
         "clean_description"
     ),
+
     (
         "category",
         OneHotEncoder(
@@ -128,55 +223,41 @@ preprocessor = ColumnTransformer([
     )
 ])
 
-
-# =========================
-# PIPELINE
-# =========================
-
 pipeline = Pipeline([
+
     (
         "preprocessor",
         preprocessor
     ),
+
     (
         "classifier",
-        LogisticRegression(
-            max_iter=1000
+
+        LinearSVC(
+            class_weight="balanced"
         )
     )
 ])
-
-
-# =========================
-# TRAIN / TEST SPLIT
-# =========================
-
-X_train, X_test, y_train, y_test = train_test_split(
-    X,
-    y,
-    test_size=0.2,
-    random_state=42
-)
-
 
 # =========================
 # TRAIN MODEL
 # =========================
 
 pipeline.fit(
+
     X_train,
+
     y_train
 )
-
 
 # =========================
 # PREDICTIONS
 # =========================
 
 predictions = pipeline.predict(
+
     X_test
 )
-
 
 # =========================
 # EVALUATION
@@ -185,19 +266,23 @@ predictions = pipeline.predict(
 print("\nClassification Report:\n")
 
 print(
+
     classification_report(
+
         y_test,
+
         predictions
     )
 )
-
 
 # =========================
 # SAVE MODEL
 # =========================
 
 joblib.dump(
+
     pipeline,
+
     "../models/severity_classifier.pkl"
 )
 
