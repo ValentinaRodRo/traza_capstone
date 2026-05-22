@@ -1,25 +1,35 @@
+import os
 import requests
 
-BACKEND_URL = "http://127.0.0.1:8000/reports"
+from dotenv import load_dotenv
 
-TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJlbWFpbCI6ImFkbWluQHRyYXphLmNvbSIsInJvbGUiOiJhdXRob3JpdHkiLCJleHAiOjE3Nzk0NTMzNTZ9.x--LxiDoD58qTtep4tPc14tb-GaNgzad3rB2r52y0VY"
+load_dotenv()
+
+BACKEND_URL = os.getenv(
+    "BACKEND_URL"
+)
+
+API_KEY = os.getenv(
+    "ML_SERVICE_API_KEY"
+)
+
 
 def fetch_reports():
 
     headers = {
-        "Authorization":
-        f"Bearer {TOKEN}"
+        "x-api-key": API_KEY
     }
 
     response = requests.get(
         BACKEND_URL,
-        headers=headers
+        headers=headers,
+        timeout=10
     )
 
     if response.status_code != 200:
 
         raise Exception(
-            f"Failed to fetch reports "
+            f"Failed to fetch reports: "
             f"{response.text}"
         )
 

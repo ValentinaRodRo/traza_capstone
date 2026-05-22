@@ -2,8 +2,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi import Request, HTTPException
 from jose import jwt, JWTError
 
-SECRET_KEY = "traza_super_secret_key"
-ALGORITHM = "HS256"
+from app.config import SECRET_KEY, ALGORITHM
 
 
 class JWTBearer(HTTPBearer):

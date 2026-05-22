@@ -1,8 +1,12 @@
 import geopandas as gpd
 from shapely.geometry import Point
 
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent
+
 zones = gpd.read_file(
-    "chia_zones.geojson"
+    BASE_DIR / "chia_zones.geojson"
 )
 
 print(zones.head())

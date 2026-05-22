@@ -1,9 +1,11 @@
 from jose import jwt
 from datetime import datetime, timedelta
 
-SECRET_KEY = "traza_super_secret_key"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60
+from app.config import (
+    SECRET_KEY,
+    ALGORITHM,
+    ACCESS_TOKEN_EXPIRE_MINUTES
+)
 
 
 def create_access_token(data: dict):
