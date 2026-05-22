@@ -3,12 +3,20 @@ import pandas as pd
 import spacy
 import unicodedata
 import re
-from zone_classifier import classify_zone
+from app.zone_classifier import classify_zone
 import numpy as np
 
-model = joblib.load(
-    "../models/severity_classifier.pkl"
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent
+
+MODEL_PATH = (
+    BASE_DIR.parent
+    / "models"
+    / "severity_classifier.pkl"
 )
+
+model = joblib.load(MODEL_PATH)
 
 nlp = spacy.load(
     "es_core_news_sm"
