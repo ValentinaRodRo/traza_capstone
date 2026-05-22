@@ -3,6 +3,8 @@ import pandas as pd
 import spacy
 import unicodedata
 import re
+from zone_classifier import classify_zone
+import numpy as np
 
 model = joblib.load(
     "../models/severity_classifier.pkl"
@@ -61,27 +63,116 @@ def clean_spanish_text(text):
 
 def process_report(report):
 
+    # =========================
+    # CLEAN TEXT
+    # =========================
+
     clean_text = clean_spanish_text(
         report["description"]
     )
 
+    # =========================
+    # PREPARE INPUT
+    # =========================
+
     input_df = pd.DataFrame([{
+
         "clean_description":
             clean_text,
 
         "category":
             report["category"]
+
     }])
+
+    # =========================
+    # PREDICT SEVERITY
+    # =========================
 
     prediction = model.predict(
         input_df
     )[0]
 
-    confidence = max(
-        model.predict_proba(
-            input_df
-        )[0]
+    decision_scores = model.decision_function(
+        input_df
     )
+
+    scores = decision_scores[0]
+
+    exp_scores = np.exp(scores)
+
+    probabilities = exp_scores / exp_scores.sum()
+
+    confidence = round(
+        float(max(probabilities)),
+        2
+    )
+
+    # =========================
+    # CLASSIFY ZONE
+    # =========================
+
+    zone = classify_zone(
+        report["latitude"],
+        report["longitude"]
+    )
+
+    # =========================
+    # RISK WEIGHTS
+    # =========================
+
+    severity_weights = {
+
+        "bajo": 0.25,
+
+        "medio": 0.50,
+
+        "alto": 0.75,
+
+        "critico": 1.00
+    }
+
+    base_risk = severity_weights.get(
+        prediction,
+        0.50
+    )
+
+    # =========================
+    # TIME ANALYSIS
+    # =========================
+
+    timestamp = pd.to_datetime(
+        report["timestamp"]
+    )
+
+    hour = timestamp.hour
+
+    night_bonus = 0
+
+    if hour >= 22 or hour <= 5:
+
+        night_bonus = 0.15
+
+    # =========================
+    # FINAL RISK SCORE
+    # =========================
+
+    risk_score = min(
+
+        1.0,
+
+        (
+            base_risk
+            *
+            confidence
+        )
+        +
+        night_bonus
+    )
+
+    # =========================
+    # RETURN RESULT
+    # =========================
 
     return {
 
@@ -95,8 +186,11 @@ def process_report(report):
             ),
 
         "zone":
-            "A1",
+            zone,
 
         "risk_score":
-            0.72
+            round(
+                float(risk_score),
+                2
+            )
     }
