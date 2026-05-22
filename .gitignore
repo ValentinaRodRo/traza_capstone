@@ -1,5 +1,37 @@
+# ==========================================
+# 1. Python & Machine Learning (mlserviice)
+# ==========================================
 **/venv/
 **/.venv/
 **/env/
 **/__pycache__/
 *.pyc
+
+# ==========================================
+# 2. Reglas para "traza_app" (Flutter)
+# ==========================================
+**/traza_app/.dart_tool/
+**/traza_app/build/
+**/traza_app/.flutter-plugins
+**/traza_app/.flutter-plugins-dependencies
+**/traza_app/.packages
+**/traza_app/.pub-cache/
+**/traza_app/.pub/
+**/traza_app/windows/flutter/ephemeral/
+
+# ==========================================
+# 3. Reglas para "dashboard" (Node.js / Vite)
+# ==========================================
+**/node_modules/
+**/dist/
+**/build/
+*.log
+
+.eslintcache
+
+# ==========================================
+# 4. Configuraciones de Editores (IDEs)
+# ==========================================
+.vscode/
+.idea/
+.DS_Store
