@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+requests
+python-dotenv
+pandas
+numpy
+scikit-learn
+joblib
+spacy
+geopandas
+shapely
+fiona
+pyproj
+rtree
