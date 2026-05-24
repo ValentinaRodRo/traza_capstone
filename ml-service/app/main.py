@@ -1,11 +1,11 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 
-from inference import process_report
-from data_loader import fetch_reports
+from app.inference import process_report
+from app.data_loader import fetch_reports
 
-from zone_classifier import classify_zone
-from risk_predictor import analyze_risk
+from app.zone_classifier import classify_zone
+from app.risk_predictor import analyze_risk
 
 app = FastAPI()
 

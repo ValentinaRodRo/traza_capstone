@@ -3,11 +3,11 @@ import pandas as pd
 import spacy
 import unicodedata
 import re
-from zone_classifier import classify_zone
+from app.zone_classifier import classify_zone
 import numpy as np
 
 model = joblib.load(
-    "../models/severity_classifier.pkl"
+    "models/severity_classifier.pkl"
 )
 
 nlp = spacy.load(

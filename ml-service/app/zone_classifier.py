@@ -2,7 +2,7 @@ import geopandas as gpd
 from shapely.geometry import Point
 
 zones = gpd.read_file(
-    "chia_zones.geojson"
+    "app/chia_zones.geojson"
 )
 
 print(zones.head())
