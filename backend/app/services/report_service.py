@@ -5,22 +5,13 @@ from app.models.notification_model import Notification
 from app.models.user_model import User
 from app.utils.report_status import ReportStatus
 from app.models.report_history_model import ReportHistory
+import uuid
 
 
 def generate_tracking_code(db: Session):
-
     year = datetime.utcnow().year
-
-    last_report = db.query(Report).order_by(
-        Report.id.desc()
-    ).first()
-
-    next_number = 1
-
-    if last_report:
-        next_number = last_report.id + 1
-
-    return f"CHI-{year}-{next_number:04d}"
+    unique_part = uuid.uuid4().hex[:8].upper()
+    return f"CHI-{year}-{unique_part}"
 
 
 def create_report(
