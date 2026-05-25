@@ -3,8 +3,7 @@ import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_local_datasource.dart';
 import '../datasources/auth_remote_datasource.dart';
 
-class AuthRepositoryImpl
-    implements AuthRepository {
+class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource remoteDataSource;
   final AuthLocalDataSource localDataSource;
 
@@ -34,7 +33,9 @@ class AuthRepositoryImpl
     required String password,
     required String role,
   }) async {
+    // el backend ahora requiere name, pero el repo aún no lo expone
     final user = await remoteDataSource.register(
+      name: email, // temporal (hasta que actualices usecase/bloc)
       email: email,
       password: password,
       role: role,
