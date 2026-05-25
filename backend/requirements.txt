@@ -4,7 +4,8 @@ sqlalchemy
 psycopg2
 python-jose
 python-dotenv
-passlib
 python-multipart
 pydantic
 pytest
+passlib==1.7.4
+bcrypt==4.0.1
