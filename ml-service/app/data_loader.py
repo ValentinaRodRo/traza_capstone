@@ -5,13 +5,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-BACKEND_URL = os.getenv(
-    "BACKEND_URL"
-)
-
-API_KEY = os.getenv(
-    "ML_SERVICE_API_KEY"
-)
+BACKEND_URL = os.getenv("BACKEND_URL")
+API_KEY = os.getenv("ML_SERVICE_API_KEY")
 
 
 def fetch_reports():
@@ -21,7 +16,7 @@ def fetch_reports():
     }
 
     response = requests.get(
-        BACKEND_URL,
+        f"{BACKEND_URL}/reports/internal/ml",
         headers=headers,
         timeout=10
     )

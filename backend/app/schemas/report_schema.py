@@ -1,5 +1,11 @@
+<<<<<<< HEAD
+from pydantic import BaseModel, ConfigDict, field_serializer
+from datetime import datetime
+from typing import Optional
+=======
 from pydantic import BaseModel, ConfigDict
 from datetime import datetime
+>>>>>>> origin/main
 
 
 class ReportCreate(BaseModel):
@@ -14,9 +20,7 @@ class ReportUpdate(BaseModel):
     comment: str
 
 
-
 class ReportResponse(BaseModel):
-
     tracking_code: str
     incident_type: str
     description: str
@@ -24,7 +28,11 @@ class ReportResponse(BaseModel):
     longitude: float
     anonymous: bool
     status: str
+    created_at: datetime
+    officer_note: Optional[str] = None  # último comentario de autoridad
 
-    model_config = ConfigDict(
-        from_attributes=True
-    )
+    model_config = ConfigDict(from_attributes=True)
+
+    @field_serializer('created_at')
+    def serialize_dt(self, dt: datetime) -> str:
+        return dt.isoformat()

@@ -21,18 +21,25 @@ class _ReportHistoryPageState extends State<ReportHistoryPage> {
     context.read<ReportBloc>().add(LoadUserReports());
   }
 
+  Future<void> _refresh() async {
+    context.read<ReportBloc>().add(LoadUserReports());
+    await context.read<ReportBloc>().stream.firstWhere(
+          (s) => s is ReportLoaded || s is ReportError,
+        );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // ✅ TrazaColors.bg (era surfaceAlt)
-      backgroundColor: TrazaColors.bg,
+      backgroundColor: TrazaThemeTokens.bg(context),
       appBar: const TrazaAppBar(title: 'Mis reportes'),
       body: BlocBuilder<ReportBloc, ReportState>(
         builder: (context, state) {
           if (state is ReportLoading) {
-            return const Center(
-              // ✅ TrazaColors.brand (era navyMid)
-              child: CircularProgressIndicator(color: TrazaColors.brand),
+            return Center(
+              child: CircularProgressIndicator(
+                color: TrazaThemeTokens.brand(context),
+              ),
             );
           }
 
@@ -41,35 +48,54 @@ class _ReportHistoryPageState extends State<ReportHistoryPage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.error_outline_rounded,
-                      size: 40, color: TrazaColors.danger),
+                  Icon(Icons.error_outline_rounded,
+                      size: 40, color: TrazaThemeTokens.danger(context)),
                   const SizedBox(height: 12),
                   Text(state.message,
-                      style: const TextStyle(color: TrazaColors.textSecondary)),
+                      style: TextStyle(
+                          color: TrazaThemeTokens.textSecondary(context))),
+                  const SizedBox(height: 16),
+                  TextButton(
+                    onPressed: () =>
+                        context.read<ReportBloc>().add(LoadUserReports()),
+                    child: const Text('Reintentar'),
+                  ),
                 ],
               ),
             );
           }
 
-          final reports = state is ReportLoaded ? state.reports : <Report>[];
+          final reports =
+              state is ReportLoaded ? state.reports : <Report>[];
 
           if (reports.isEmpty) {
-            // ✅ TrazaEmptyState — ya existe en shared_widgets, no hace falta
-            //    construir el empty state a mano
-            return const Center(
-              child: TrazaEmptyState(
-                icon: Icons.folder_open_rounded,
-                title: 'No tienes reportes aún',
-                message: 'Tus reportes aparecerán aquí',
+            return RefreshIndicator(
+              onRefresh: _refresh,
+              color: TrazaThemeTokens.brand(context),
+              child: ListView(
+                children: [
+                  SizedBox(height: 120),
+                  Center(
+                    child: TrazaEmptyState(
+                      icon: Icons.folder_open_rounded,
+                      title: 'No tienes reportes aún',
+                      message: 'Tus reportes aparecerán aquí',
+                    ),
+                  ),
+                ],
               ),
             );
           }
 
-          return ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: reports.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 4),
-            itemBuilder: (_, i) => _ReportCard(report: reports[i]),
+          return RefreshIndicator(
+            onRefresh: _refresh,
+            color: TrazaThemeTokens.brand(context),
+            child: ListView.separated(
+              padding: const EdgeInsets.all(16),
+              itemCount: reports.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 4),
+              itemBuilder: (_, i) => _ReportCard(report: reports[i]),
+            ),
           );
         },
       ),
@@ -84,20 +110,19 @@ class _ReportCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final borderColor = switch (report.status) {
-      ReportStatus.pending || ReportStatus.received => TrazaColors.danger,
-      ReportStatus.inProgress => TrazaColors.warning,
-      ReportStatus.resolved => TrazaColors.success,
+      ReportStatus.pending || ReportStatus.received =>
+        TrazaThemeTokens.danger(context),
+      ReportStatus.inProgress => TrazaThemeTokens.warning(context),
+      ReportStatus.resolved => TrazaThemeTokens.success(context),
     };
 
     final timeAgo = _timeAgo(report.createdAt);
 
     return Container(
       decoration: BoxDecoration(
-        // ✅ TrazaColors.bgSurface (era surface)
-        color: TrazaColors.bgSurface,
+        color: TrazaThemeTokens.bgSurface(context),
         borderRadius: BorderRadius.circular(TrazaRadius.lg),
-        // ✅ TrazaColors.border (era borderLight)
-        border: Border.all(color: TrazaColors.border, width: 0.5),
+        border: Border.all(color: TrazaThemeTokens.border(context), width: 0.5),
       ),
       child: IntrinsicHeight(
         child: Row(
@@ -120,29 +145,36 @@ class _ReportCard extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        // ✅ TrazaStatusBadge (era StatusBadge)
                         TrazaStatusBadge(report.status),
                         const SizedBox(width: 6),
-                        Text(timeAgo,
-                            style: const TextStyle(
-                                fontSize: 10,
-                                color: TrazaColors.textTertiary)),
+                        Text(
+                          timeAgo,
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: TrazaThemeTokens.textTertiary(context),
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 8),
-                    Text('${report.type.label} — ${report.location}',
-                        style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: TrazaColors.textPrimary)),
+                    Text(
+                      '${report.type.label} — ${report.location}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: TrazaThemeTokens.textPrimary(context),
+                      ),
+                    ),
                     const SizedBox(height: 3),
-                    Text(report.id,
-                        style: const TextStyle(
-                            fontSize: 10,
-                            fontFamily: 'monospace',
-                            color: TrazaColors.textTertiary)),
+                    Text(
+                      report.id,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontFamily: 'monospace',
+                        color: TrazaThemeTokens.textTertiary(context),
+                      ),
+                    ),
                     const SizedBox(height: 12),
-                    // ✅ TrazaStepTracker (era ReportStepTracker)
                     TrazaStepTracker(report.status),
                     if (report.officerNote != null &&
                         report.officerNote!.isNotEmpty) ...[
@@ -150,21 +182,25 @@ class _ReportCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          // ✅ TrazaColors.successSub (era successLight)
-                          color: TrazaColors.successSub,
-                          borderRadius: BorderRadius.circular(TrazaRadius.sm),
+                          color: TrazaThemeTokens.successSub(context),
+                          borderRadius:
+                              BorderRadius.circular(TrazaRadius.sm),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.shield_outlined,
-                                size: 13, color: TrazaColors.successText),
+                            Icon(
+                              Icons.shield_outlined,
+                              size: 13,
+                              color: TrazaThemeTokens.successText(context),
+                            ),
                             const SizedBox(width: 6),
                             Expanded(
                               child: Text(
                                 report.officerNote!,
-                                style: const TextStyle(
-                                    fontSize: 11,
-                                    color: TrazaColors.successText),
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: TrazaThemeTokens.successText(context),
+                                ),
                               ),
                             ),
                           ],
@@ -183,6 +219,7 @@ class _ReportCard extends StatelessWidget {
 
   String _timeAgo(DateTime dt) {
     final diff = DateTime.now().difference(dt);
+    if (diff.inMinutes < 1) return 'Ahora';
     if (diff.inMinutes < 60) return 'Hace ${diff.inMinutes} min';
     if (diff.inHours < 24) return 'Hace ${diff.inHours} h';
     return DateFormat('dd MMM', 'es').format(dt);

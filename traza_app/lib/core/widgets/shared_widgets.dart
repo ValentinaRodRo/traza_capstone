@@ -4,52 +4,10 @@ import 'package:flutter/services.dart';
 import '../../features/report/domain/entities/report.dart';
 import '../theme/app_theme.dart';
 
-// ═══════════════════════════════════════════════════════════════════════════════
-//  TRAZA SHARED WIDGETS — shared_widgets.dart
-//
-//  Component index:
-//    Layout
-//      · TrazaScaffold          — base scaffold con nav + FAB opcional
-//      · TrazaAppBar            — header estándar con logo o back
-//      · TrazaBottomNav         — tab bar global con estado activo
-//      · TrazaBottomSheet       — sheet modal reutilizable
-//
-//    Typography & Structure
-//      · TrazaSectionHeader     — título uppercase + link acción
-//      · TrazaFormSectionCard   — card contenedor para secciones de formulario
-//
-//    Data Display
-//      · TrazaStatCard          — métrica con icono coloreado
-//      · TrazaZoneCard          — zona con accent bar lateral
-//      · TrazaReportCard        — card de reporte con estado y tracker
-//
-//    Badges & Status
-//      · TrazaBadge             — pill genérico configurable
-//      · TrazaStatusBadge       — badge de estado de reporte
-//      · TrazaTrustBadge        — badge de confianza ciudadana
-//      · TrazaRiskBadge         — badge de nivel de riesgo (mapa)
-//
-//    Inputs & Forms
-//      · TrazaPrimaryButton     — botón principal con gradiente
-//      · TrazaSecondaryButton   — botón outlined
-//      · TrazaTextField         — input con estilo Traza
-//      · TrazaSelectableTile    — tile de selección animado
-//
-//    Feedback
-//      · TrazaInfoBanner        — banner contextual informativo
-//      · TrazaErrorBanner       — banner de error inline
-//      · TrazaEmptyState        — estado vacío con icono + mensaje
-//      · TrazaLoadingSkeleton   — shimmer genérico configurable
-//      · TrazaStepTracker       — tracker de pasos de reporte
-// ═══════════════════════════════════════════════════════════════════════════════
-
-
 // ─────────────────────────────────────────────
-//  LAYOUT — TrazaScaffold
+//  TrazaScaffold
 // ─────────────────────────────────────────────
 
-/// Scaffold base de la app. Todos los pages usan este widget como raíz.
-/// Incluye [TrazaBottomNav] si [showBottomNav] es true, y un FAB opcional.
 class TrazaScaffold extends StatelessWidget {
   final Widget body;
   final TrazaAppBar? appBar;
@@ -70,10 +28,12 @@ class TrazaScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = TrazaThemeTokens.isDark(context);
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.light,
+      // ✅ overlay style adaptativo
+      value: isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
       child: Scaffold(
-        backgroundColor: TrazaColors.bg,
+        // ✅ hereda scaffoldBackgroundColor
         appBar: appBar,
         body: body,
         bottomNavigationBar: showBottomNav
@@ -88,14 +48,10 @@ class TrazaScaffold extends StatelessWidget {
   }
 }
 
-
 // ─────────────────────────────────────────────
-//  LAYOUT — TrazaAppBar
+//  TrazaAppBar
 // ─────────────────────────────────────────────
 
-/// AppBar estándar Traza.
-/// Modo [isHome]: muestra logo T + nombre app + ubicación.
-/// Modo normal: muestra título centrado con back opcional.
 class TrazaAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final String? subtitle;
@@ -114,10 +70,9 @@ class TrazaAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tt = Theme.of(context);
     return AppBar(
-      backgroundColor: TrazaColors.bg,
-      elevation: 0,
-      scrolledUnderElevation: 0,
+      // ✅ hereda appBarTheme completo
       automaticallyImplyLeading: false,
       leading: showBack
           ? IconButton(
@@ -125,21 +80,26 @@ class TrazaAppBar extends StatelessWidget implements PreferredSizeWidget {
                 width: 34,
                 height: 34,
                 decoration: BoxDecoration(
-                  color: TrazaColors.bgCard,
+                  color: tt.cardTheme.color,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: TrazaColors.border, width: 0.5),
+                  border: Border.all(
+                    color: tt.dividerTheme.color ?? TrazaColors.border,
+                    width: 0.5,
+                  ),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.arrow_back_ios_new_rounded,
                   size: 14,
-                  color: TrazaColors.textSecondary,
+                  color: TrazaThemeTokens.textSecondary(context),
                 ),
               ),
               onPressed: () => Navigator.of(context).pop(),
             )
           : null,
       titleSpacing: isHome ? 0 : NavigationToolbar.kMiddleSpacing,
-      title: isHome ? _HomeTitleContent(subtitle: subtitle) : _PageTitleContent(title: title),
+      title: isHome
+          ? _HomeTitleContent(subtitle: subtitle)
+          : _PageTitleContent(title: title),
       actions: [
         if (actions != null) ...actions!,
         const SizedBox(width: 4),
@@ -157,46 +117,50 @@ class _HomeTitleContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tt         = Theme.of(context);
+    final brandColor = TrazaThemeTokens.brand(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
         children: [
-          // Logo box
           Container(
             width: 34,
             height: 34,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [TrazaColors.brand, TrazaColors.brandDeep],
+              gradient: LinearGradient(
+                colors: [brandColor, TrazaColors.brandDeep],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(10),
               boxShadow: TrazaShadows.brand,
             ),
-            child: const Center(
-              child: Text('T',
-                  style: TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16)),
+            child: Padding(
+              padding: const EdgeInsets.all(6),
+              child: Image.asset(
+                'assets/icons/logo.png',
+                fit: BoxFit.contain,
+              ),
             ),
           ),
           const SizedBox(width: 10),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Traza', style: TrazaTextStyles.titleLarge),
+              Text('Traza', style: tt.textTheme.titleLarge),
               if (subtitle != null)
                 Row(
                   children: [
                     Container(
-                      width: 5, height: 5,
+                      width: 5,
+                      height: 5,
                       margin: const EdgeInsets.only(right: 5),
-                      decoration: const BoxDecoration(
-                        color: TrazaColors.brand,
+                      decoration: BoxDecoration(
+                        color: brandColor,
                         shape: BoxShape.circle,
                       ),
                     ),
-                    Text(subtitle!, style: TrazaTextStyles.labelSmall),
+                    Text(subtitle!, style: tt.textTheme.labelSmall),
                   ],
                 ),
             ],
@@ -213,13 +177,12 @@ class _PageTitleContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(title, style: TrazaTextStyles.titleLarge);
+    return Text(title, style: Theme.of(context).textTheme.titleLarge);
   }
 }
 
-
 // ─────────────────────────────────────────────
-//  LAYOUT — TrazaBottomNav
+//  TrazaBottomNav
 // ─────────────────────────────────────────────
 
 class TrazaBottomNav extends StatelessWidget {
@@ -241,10 +204,17 @@ class TrazaBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tt = Theme.of(context);
     return Container(
-      decoration: const BoxDecoration(
-        color: TrazaColors.bg,
-        border: Border(top: BorderSide(color: TrazaColors.borderFaint, width: 0.5)),
+      decoration: BoxDecoration(
+        // ✅ hereda bottomNavigationBarTheme.backgroundColor
+        color: tt.bottomNavigationBarTheme.backgroundColor,
+        border: Border(
+          top: BorderSide(
+            color: TrazaThemeTokens.borderFaint(context),
+            width: 0.5,
+          ),
+        ),
       ),
       child: SafeArea(
         child: Padding(
@@ -252,7 +222,7 @@ class TrazaBottomNav extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: List.generate(_items.length, (i) {
-              final item = _items[i];
+              final item   = _items[i];
               final active = i == currentIndex;
               return _NavItem(
                 iconInactive: item.$1,
@@ -289,7 +259,12 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = active ? TrazaColors.brand : TrazaColors.textTertiary;
+    final tt         = Theme.of(context);
+    // ✅ colores del bottomNavigationBarTheme
+    final activeColor   = tt.bottomNavigationBarTheme.selectedItemColor!;
+    final inactiveColor = tt.bottomNavigationBarTheme.unselectedItemColor!;
+    final color         = active ? activeColor : inactiveColor;
+
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
@@ -298,7 +273,7 @@ class _NavItem extends StatelessWidget {
         curve: Curves.easeOut,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         decoration: BoxDecoration(
-          color: active ? TrazaColors.bgCard : Colors.transparent,
+          color: active ? tt.cardTheme.color : Colors.transparent,
           borderRadius: BorderRadius.circular(10),
         ),
         child: Column(
@@ -308,7 +283,9 @@ class _NavItem extends StatelessWidget {
             const SizedBox(height: 3),
             Text(label,
                 style: TextStyle(
-                    color: color, fontSize: 9, fontWeight: FontWeight.w500)),
+                    color: color,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w500)),
           ],
         ),
       ),
@@ -316,12 +293,10 @@ class _NavItem extends StatelessWidget {
   }
 }
 
-
 // ─────────────────────────────────────────────
-//  LAYOUT — TrazaBottomSheet
+//  TrazaBottomSheet
 // ─────────────────────────────────────────────
 
-/// Sheet modal reutilizable. Llama con [TrazaBottomSheet.show(context, child)].
 class TrazaBottomSheet extends StatelessWidget {
   final String? title;
   final Widget child;
@@ -341,10 +316,7 @@ class TrazaBottomSheet extends StatelessWidget {
   }) {
     return showModalBottomSheet<T>(
       context: context,
-      backgroundColor: TrazaColors.bgOverlay,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
+      // ✅ hereda bottomSheetTheme.modalBackgroundColor y shape
       isScrollControlled: true,
       builder: (_) => TrazaBottomSheet(title: title, child: child),
     );
@@ -352,6 +324,7 @@ class TrazaBottomSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tt = Theme.of(context);
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Column(
@@ -363,7 +336,8 @@ class TrazaBottomSheet extends StatelessWidget {
               width: 36,
               height: 4,
               decoration: BoxDecoration(
-                color: TrazaColors.border,
+                // ✅ adaptativo
+                color: tt.dividerTheme.color,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -372,7 +346,8 @@ class TrazaBottomSheet extends StatelessWidget {
             const SizedBox(height: 16),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Text(title!, style: TrazaTextStyles.titleMedium),
+              // ✅ textTheme adaptativo
+              child: Text(title!, style: tt.textTheme.titleMedium),
             ),
           ],
           const SizedBox(height: 16),
@@ -384,9 +359,8 @@ class TrazaBottomSheet extends StatelessWidget {
   }
 }
 
-
 // ─────────────────────────────────────────────
-//  STRUCTURE — TrazaSectionHeader
+//  TrazaSectionHeader
 // ─────────────────────────────────────────────
 
 class TrazaSectionHeader extends StatelessWidget {
@@ -403,27 +377,38 @@ class TrazaSectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tt         = Theme.of(context);
+    final brandColor = TrazaThemeTokens.brand(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(title.toUpperCase(), style: TrazaTextStyles.sectionHeader),
+        // ✅ sectionHeader no está en textTheme, pero su color es textPrimary
+        //    que sí es adaptativo — usamos copyWith sobre el token
+        Text(
+          title.toUpperCase(),
+          style: TrazaTextStyles.sectionHeader.copyWith(
+            color: TrazaThemeTokens.textPrimary(context),
+          ),
+        ),
         if (action != null)
           GestureDetector(
             onTap: onAction,
-            child: Text(action!,
-                style: TrazaTextStyles.labelSmall.copyWith(
-                    color: TrazaColors.brand,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500)),
+            child: Text(
+              action!,
+              style: tt.textTheme.labelSmall?.copyWith(
+                color: brandColor,
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ),
       ],
     );
   }
 }
 
-
 // ─────────────────────────────────────────────
-//  STRUCTURE — TrazaFormSectionCard
+//  TrazaFormSectionCard
 // ─────────────────────────────────────────────
 
 class TrazaFormSectionCard extends StatelessWidget {
@@ -434,18 +419,23 @@ class TrazaFormSectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tt = Theme.of(context);
     return Container(
       padding: TrazaSpacing.cardPadding,
       decoration: BoxDecoration(
-        color: TrazaColors.bgSurface,
+        // ✅ surface adaptativo
+        color: tt.colorScheme.surface,
         borderRadius: TrazaRadius.card,
-        border: Border.all(color: TrazaColors.border, width: 0.5),
+        border: Border.all(
+          color: tt.dividerTheme.color ?? TrazaColors.border,
+          width: 0.5,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (label != null) ...[
-            Text(label!.toUpperCase(), style: TrazaTextStyles.labelSmall),
+            Text(label!.toUpperCase(), style: tt.textTheme.labelSmall),
             const SizedBox(height: TrazaSpacing.md),
           ],
           child,
@@ -455,9 +445,8 @@ class TrazaFormSectionCard extends StatelessWidget {
   }
 }
 
-
 // ─────────────────────────────────────────────
-//  DATA DISPLAY — TrazaStatCard
+//  TrazaStatCard
 // ─────────────────────────────────────────────
 
 class TrazaStatCard extends StatelessWidget {
@@ -480,12 +469,16 @@ class TrazaStatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tt = Theme.of(context);
     return Container(
       padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
-        color: TrazaColors.bgSurface,
+        color: tt.colorScheme.surface,
         borderRadius: TrazaRadius.card,
-        border: Border.all(color: TrazaColors.border, width: 0.5),
+        border: Border.all(
+          color: tt.dividerTheme.color ?? TrazaColors.border,
+          width: 0.5,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -501,19 +494,19 @@ class TrazaStatCard extends StatelessWidget {
           Text(
             value,
             style: TrazaTextStyles.statValue.copyWith(
-                color: valueColor ?? TrazaColors.textPrimary),
+              color: valueColor ?? TrazaThemeTokens.textPrimary(context),
+            ),
           ),
           const SizedBox(height: 3),
-          Text(label, style: TrazaTextStyles.labelSmall),
+          Text(label, style: tt.textTheme.labelSmall),
         ],
       ),
     );
   }
 }
 
-
 // ─────────────────────────────────────────────
-//  DATA DISPLAY — TrazaZoneCard
+//  TrazaZoneCard
 // ─────────────────────────────────────────────
 
 class TrazaZoneCard extends StatelessWidget {
@@ -538,14 +531,19 @@ class TrazaZoneCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tt = Theme.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
         decoration: BoxDecoration(
-          color: TrazaColors.bgSurface,
+          // ✅ surface adaptativo
+          color: tt.colorScheme.surface,
           borderRadius: TrazaRadius.card,
-          border: Border.all(color: TrazaColors.border, width: 0.5),
+          border: Border.all(
+            color: tt.dividerTheme.color ?? TrazaColors.border,
+            width: 0.5,
+          ),
         ),
         clipBehavior: Clip.antiAlias,
         child: IntrinsicHeight(
@@ -571,10 +569,10 @@ class TrazaZoneCard extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(name, style: TrazaTextStyles.titleSmall),
+                            Text(name, style: tt.textTheme.titleSmall),
                             const SizedBox(height: 2),
                             Text('$reports reportes · $timeAgo',
-                                style: TrazaTextStyles.labelSmall),
+                                style: tt.textTheme.labelSmall),
                           ],
                         ),
                       ),
@@ -596,9 +594,8 @@ class TrazaZoneCard extends StatelessWidget {
   }
 }
 
-
 // ─────────────────────────────────────────────
-//  DATA DISPLAY — TrazaReportCard
+//  TrazaReportCard
 // ─────────────────────────────────────────────
 
 class TrazaReportCard extends StatelessWidget {
@@ -621,36 +618,43 @@ class TrazaReportCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tt = Theme.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: TrazaColors.bgSurface,
+          color: tt.colorScheme.surface,
           borderRadius: TrazaRadius.card,
-          border: Border.all(color: TrazaColors.border, width: 0.5),
+          border: Border.all(
+            color: tt.dividerTheme.color ?? TrazaColors.border,
+            width: 0.5,
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Expanded(child: Text(title, style: TrazaTextStyles.titleSmall)),
+                Expanded(child: Text(title, style: tt.textTheme.titleSmall)),
                 TrazaStatusBadge(status),
               ],
             ),
             const SizedBox(height: 6),
             Row(
               children: [
-                const Icon(Icons.location_on_outlined,
-                    size: 12, color: TrazaColors.textTertiary),
+                Icon(
+                  Icons.location_on_outlined,
+                  size: 12,
+                  color: TrazaThemeTokens.textTertiary(context),
+                ),
                 const SizedBox(width: 3),
                 Expanded(
                     child: Text(location,
-                        style: TrazaTextStyles.labelSmall,
+                        style: tt.textTheme.labelSmall,
                         overflow: TextOverflow.ellipsis)),
-                Text(timeAgo, style: TrazaTextStyles.labelSmall),
+                Text(timeAgo, style: tt.textTheme.labelSmall),
               ],
             ),
             const SizedBox(height: 12),
@@ -662,9 +666,8 @@ class TrazaReportCard extends StatelessWidget {
   }
 }
 
-
 // ─────────────────────────────────────────────
-//  BADGES — TrazaBadge (generic)
+//  TrazaBadge
 // ─────────────────────────────────────────────
 
 class TrazaBadge extends StatelessWidget {
@@ -691,9 +694,8 @@ class TrazaBadge extends StatelessWidget {
   }
 }
 
-
 // ─────────────────────────────────────────────
-//  BADGES — TrazaStatusBadge
+//  TrazaStatusBadge
 // ─────────────────────────────────────────────
 
 class TrazaStatusBadge extends StatelessWidget {
@@ -702,19 +704,26 @@ class TrazaStatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // ✅ colores adaptativos via TrazaThemeTokens
     final (label, bg, fg) = switch (status) {
-      ReportStatus.pending    => ('Sin atender', TrazaColors.dangerSub,  TrazaColors.dangerText),
-      ReportStatus.received   => ('Recibido',    TrazaColors.infoSub,    TrazaColors.infoText),
-      ReportStatus.inProgress => ('En proceso',  TrazaColors.warningSub, TrazaColors.warningText),
-      ReportStatus.resolved   => ('Resuelto',    TrazaColors.successSub, TrazaColors.successText),
+      ReportStatus.pending    => ('Sin atender', TrazaThemeTokens.dangerSub(context),  _dangerText(context)),
+      ReportStatus.received   => ('Recibido',    TrazaThemeTokens.infoSub(context),    _infoText(context)),
+      ReportStatus.inProgress => ('En proceso',  TrazaThemeTokens.warningSub(context), _warningText(context)),
+      ReportStatus.resolved   => ('Resuelto',    TrazaThemeTokens.successSub(context), TrazaThemeTokens.successText(context)),
     };
     return TrazaBadge(label: label, color: fg, bgColor: bg);
   }
+
+  Color _dangerText(BuildContext context) => TrazaThemeTokens.isDark(context)
+      ? TrazaColors.dangerText : TrazaColorsLight.dangerText;
+  Color _infoText(BuildContext context) => TrazaThemeTokens.isDark(context)
+      ? TrazaColors.infoText : TrazaColorsLight.infoText;
+  Color _warningText(BuildContext context) => TrazaThemeTokens.isDark(context)
+      ? TrazaColors.warningText : TrazaColorsLight.warningText;
 }
 
-
 // ─────────────────────────────────────────────
-//  BADGES — TrazaTrustBadge
+//  TrazaTrustBadge
 // ─────────────────────────────────────────────
 
 class TrazaTrustBadge extends StatelessWidget {
@@ -724,10 +733,11 @@ class TrazaTrustBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (trust == null) return const SizedBox.shrink();
+    // ✅ adaptativos
     final (label, bg, fg, icon) = switch (trust!) {
-      CitizenTrust.reliable  => ('Ciudadano confiable', TrazaColors.successSub, TrazaColors.successText, '★'),
-      CitizenTrust.noRecord  => ('Sin registro',        TrazaColors.bgCard,     TrazaColors.textSecondary, '○'),
-      CitizenTrust.firstTime => ('Primera vez',         TrazaColors.purpleSub,  TrazaColors.purpleText, '◆'),
+      CitizenTrust.reliable  => ('Ciudadano confiable', TrazaThemeTokens.successSub(context), TrazaThemeTokens.successText(context), '★'),
+      CitizenTrust.noRecord  => ('Sin registro',        Theme.of(context).cardTheme.color ?? TrazaThemeTokens.bgCard(context), TrazaThemeTokens.textSecondary(context), '○'),
+      CitizenTrust.firstTime => ('Primera vez',         TrazaThemeTokens.purpleSub(context),  _purpleText(context), '◆'),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -743,11 +753,13 @@ class TrazaTrustBadge extends StatelessWidget {
       ),
     );
   }
+
+  Color _purpleText(BuildContext context) => TrazaThemeTokens.isDark(context)
+      ? TrazaColors.purpleText : TrazaColorsLight.purpleText;
 }
 
-
 // ─────────────────────────────────────────────
-//  BADGES — TrazaRiskBadge
+//  TrazaRiskBadge
 // ─────────────────────────────────────────────
 
 class TrazaRiskBadge extends StatelessWidget {
@@ -768,9 +780,8 @@ class TrazaRiskBadge extends StatelessWidget {
   }
 }
 
-
 // ─────────────────────────────────────────────
-//  INPUTS — TrazaPrimaryButton
+//  TrazaPrimaryButton
 // ─────────────────────────────────────────────
 
 class TrazaPrimaryButton extends StatelessWidget {
@@ -791,17 +802,20 @@ class TrazaPrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // ✅ hereda elevatedButtonTheme; solo sobreescribe si se pasa backgroundColor
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: backgroundColor ?? TrazaColors.brand,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 15),
-          shape: RoundedRectangleBorder(borderRadius: TrazaRadius.button),
-          elevation: 0,
-          shadowColor: Colors.transparent,
-        ),
+        style: backgroundColor != null
+            ? ElevatedButton.styleFrom(
+                backgroundColor: backgroundColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 15),
+                shape: RoundedRectangleBorder(borderRadius: TrazaRadius.button),
+                elevation: 0,
+                shadowColor: Colors.transparent,
+              )
+            : null,
         onPressed: isLoading ? null : onPressed,
         child: isLoading
             ? const SizedBox(
@@ -809,8 +823,7 @@ class TrazaPrimaryButton extends StatelessWidget {
                 height: 20,
                 child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    valueColor:
-                        AlwaysStoppedAnimation<Color>(Colors.white)))
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white)))
             : Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -818,7 +831,8 @@ class TrazaPrimaryButton extends StatelessWidget {
                     Icon(icon, size: 18),
                     const SizedBox(width: 8),
                   ],
-                  Text(label, style: TrazaTextStyles.labelLarge),
+                  // ✅ textTheme adaptativo
+                  Text(label, style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white)),
                 ],
               ),
       ),
@@ -826,9 +840,8 @@ class TrazaPrimaryButton extends StatelessWidget {
   }
 }
 
-
 // ─────────────────────────────────────────────
-//  INPUTS — TrazaSecondaryButton
+//  TrazaSecondaryButton
 // ─────────────────────────────────────────────
 
 class TrazaSecondaryButton extends StatelessWidget {
@@ -845,15 +858,10 @@ class TrazaSecondaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // ✅ hereda outlinedButtonTheme completamente
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: TrazaColors.brand,
-          side: const BorderSide(color: TrazaColors.border, width: 0.5),
-          padding: const EdgeInsets.symmetric(vertical: 15),
-          shape: RoundedRectangleBorder(borderRadius: TrazaRadius.button),
-        ),
         onPressed: onPressed,
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -862,7 +870,7 @@ class TrazaSecondaryButton extends StatelessWidget {
               Icon(icon, size: 18),
               const SizedBox(width: 8),
             ],
-            Text(label, style: TrazaTextStyles.labelLarge.copyWith(color: TrazaColors.brand)),
+            Text(label),
           ],
         ),
       ),
@@ -870,9 +878,8 @@ class TrazaSecondaryButton extends StatelessWidget {
   }
 }
 
-
 // ─────────────────────────────────────────────
-//  INPUTS — TrazaTextField
+//  TrazaTextField
 // ─────────────────────────────────────────────
 
 class TrazaTextField extends StatelessWidget {
@@ -904,22 +911,22 @@ class TrazaTextField extends StatelessWidget {
       maxLines: maxLines,
       keyboardType: keyboardType,
       onChanged: onChanged,
-      style: TrazaTextStyles.bodyMedium.copyWith(color: TrazaColors.textPrimary),
+      // ✅ hereda style de inputDecorationTheme / textTheme
       decoration: InputDecoration(
         hintText: hint,
         labelText: label,
         errorText: errorText,
         prefixIcon: prefixIcon != null
-            ? Icon(prefixIcon, size: 18, color: TrazaColors.textTertiary)
+            ? Icon(prefixIcon, size: 18,
+                color: TrazaThemeTokens.textTertiary(context))
             : null,
       ),
     );
   }
 }
 
-
 // ─────────────────────────────────────────────
-//  INPUTS — TrazaSelectableTile
+//  TrazaSelectableTile
 // ─────────────────────────────────────────────
 
 class TrazaSelectableTile extends StatelessWidget {
@@ -940,6 +947,10 @@ class TrazaSelectableTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tt         = Theme.of(context);
+    final brandColor = TrazaThemeTokens.brand(context);
+    final brandSub   = TrazaThemeTokens.brandSub(context);
+
     return GestureDetector(
       onTap: () {
         HapticFeedback.selectionClick();
@@ -952,10 +963,11 @@ class TrazaSelectableTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(
             horizontal: TrazaSpacing.md, vertical: 11),
         decoration: BoxDecoration(
-          color: isSelected ? TrazaColors.brandSub : TrazaColors.bgSurface,
+          // ✅ adaptativos
+          color: isSelected ? brandSub : tt.colorScheme.surface,
           borderRadius: TrazaRadius.input,
           border: Border.all(
-            color: isSelected ? TrazaColors.brand : TrazaColors.border,
+            color: isSelected ? brandColor : (tt.dividerTheme.color ?? TrazaColors.border),
             width: isSelected ? 1.5 : 0.5,
           ),
         ),
@@ -967,36 +979,40 @@ class TrazaSelectableTile extends StatelessWidget {
               height: 36,
               decoration: BoxDecoration(
                 color: isSelected
-                    ? TrazaColors.brand.withOpacity(0.15)
-                    : TrazaColors.bgCard,
+                    ? brandColor.withOpacity(0.15)
+                    : tt.cardTheme.color,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(icon,
                   size: 18,
                   color: isSelected
-                      ? TrazaColors.brand
-                      : TrazaColors.textSecondary),
+                      ? brandColor
+                      : TrazaThemeTokens.textSecondary(context)),
             ),
             const SizedBox(width: TrazaSpacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title,
-                      style: TrazaTextStyles.bodyMedium.copyWith(
-                          color: isSelected
-                              ? TrazaColors.textPrimary
-                              : TrazaColors.textSecondary,
-                          fontWeight: isSelected
-                              ? FontWeight.w600
-                              : FontWeight.w400)),
+                  Text(
+                    title,
+                    style: tt.textTheme.bodyMedium?.copyWith(
+                      color: isSelected
+                          ? TrazaThemeTokens.textPrimary(context)
+                          : TrazaThemeTokens.textSecondary(context),
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                    ),
+                  ),
                   if (subtitle != null) ...[
                     const SizedBox(height: 1),
-                    Text(subtitle!,
-                        style: TrazaTextStyles.labelSmall.copyWith(
-                            color: isSelected
-                                ? TrazaColors.brand
-                                : TrazaColors.textTertiary)),
+                    Text(
+                      subtitle!,
+                      style: tt.textTheme.labelSmall?.copyWith(
+                        color: isSelected
+                            ? brandColor
+                            : TrazaThemeTokens.textTertiary(context),
+                      ),
+                    ),
                   ],
                 ],
               ),
@@ -1007,18 +1023,14 @@ class TrazaSelectableTile extends StatelessWidget {
               height: 20,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color:
-                    isSelected ? TrazaColors.brand : Colors.transparent,
+                color: isSelected ? brandColor : Colors.transparent,
                 border: Border.all(
-                  color: isSelected
-                      ? TrazaColors.brand
-                      : TrazaColors.border,
+                  color: isSelected ? brandColor : (tt.dividerTheme.color ?? TrazaColors.border),
                   width: 1.5,
                 ),
               ),
               child: isSelected
-                  ? const Icon(Icons.check_rounded,
-                      size: 12, color: Colors.white)
+                  ? const Icon(Icons.check_rounded, size: 12, color: Colors.white)
                   : null,
             ),
           ],
@@ -1028,31 +1040,28 @@ class TrazaSelectableTile extends StatelessWidget {
   }
 }
 
-
 // ─────────────────────────────────────────────
-//  FEEDBACK — TrazaInfoBanner
+//  TrazaInfoBanner
 // ─────────────────────────────────────────────
 
 class TrazaInfoBanner extends StatelessWidget {
   final Widget child;
-
   const TrazaInfoBanner({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {
+    final infoColor = TrazaThemeTokens.info(context);
     return Container(
       padding: const EdgeInsets.symmetric(
           horizontal: TrazaSpacing.md, vertical: 10),
       decoration: BoxDecoration(
-        color: TrazaColors.infoSub,
+        color: TrazaThemeTokens.infoSub(context),
         borderRadius: BorderRadius.circular(TrazaRadius.md),
-        border: Border.all(
-            color: TrazaColors.info.withOpacity(0.2), width: 0.5),
+        border: Border.all(color: infoColor.withOpacity(0.2), width: 0.5),
       ),
       child: Row(
         children: [
-          const Icon(Icons.info_outline_rounded,
-              size: 15, color: TrazaColors.info),
+          Icon(Icons.info_outline_rounded, size: 15, color: infoColor),
           const SizedBox(width: TrazaSpacing.sm),
           Expanded(child: child),
         ],
@@ -1061,37 +1070,37 @@ class TrazaInfoBanner extends StatelessWidget {
   }
 }
 
-
 // ─────────────────────────────────────────────
-//  FEEDBACK — TrazaErrorBanner
+//  TrazaErrorBanner
 // ─────────────────────────────────────────────
 
 class TrazaErrorBanner extends StatelessWidget {
   final String message;
-
   const TrazaErrorBanner(this.message, {super.key});
 
   @override
   Widget build(BuildContext context) {
+    final dangerColor = TrazaThemeTokens.danger(context);
+    final dangerText  = TrazaThemeTokens.isDark(context)
+        ? TrazaColors.dangerText : TrazaColorsLight.dangerText;
     return Container(
       margin: const EdgeInsets.only(bottom: TrazaSpacing.sm),
       padding: const EdgeInsets.symmetric(
           horizontal: TrazaSpacing.md, vertical: TrazaSpacing.sm),
       decoration: BoxDecoration(
-        color: TrazaColors.dangerSub,
+        color: TrazaThemeTokens.dangerSub(context),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-            color: TrazaColors.danger.withOpacity(0.2), width: 0.5),
+        border: Border.all(color: dangerColor.withOpacity(0.2), width: 0.5),
       ),
       child: Row(
         children: [
-          const Icon(Icons.error_outline_rounded,
-              size: 14, color: TrazaColors.dangerText),
+          Icon(Icons.error_outline_rounded, size: 14, color: dangerText),
           const SizedBox(width: 6),
           Expanded(
             child: Text(message,
-                style: TrazaTextStyles.labelSmall
-                    .copyWith(color: TrazaColors.dangerText)),
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: dangerText,
+                    )),
           ),
         ],
       ),
@@ -1099,9 +1108,8 @@ class TrazaErrorBanner extends StatelessWidget {
   }
 }
 
-
 // ─────────────────────────────────────────────
-//  FEEDBACK — TrazaEmptyState
+//  TrazaEmptyState
 // ─────────────────────────────────────────────
 
 class TrazaEmptyState extends StatelessWidget {
@@ -1122,6 +1130,7 @@ class TrazaEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tt = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 32),
       child: Column(
@@ -1131,26 +1140,23 @@ class TrazaEmptyState extends StatelessWidget {
             width: 64,
             height: 64,
             decoration: BoxDecoration(
-              color: TrazaColors.bgCard,
+              color: tt.cardTheme.color,
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: TrazaColors.border, width: 0.5),
+              border: Border.all(
+                color: tt.dividerTheme.color ?? TrazaColors.border,
+                width: 0.5,
+              ),
             ),
-            child: Icon(icon, size: 28, color: TrazaColors.textTertiary),
+            child: Icon(icon, size: 28,
+                color: TrazaThemeTokens.textTertiary(context)),
           ),
           const SizedBox(height: 16),
-          Text(title,
-              style: TrazaTextStyles.titleSmall,
-              textAlign: TextAlign.center),
+          Text(title, style: tt.textTheme.titleSmall, textAlign: TextAlign.center),
           const SizedBox(height: 6),
-          Text(message,
-              style: TrazaTextStyles.bodyMedium,
-              textAlign: TextAlign.center),
+          Text(message, style: tt.textTheme.bodyMedium, textAlign: TextAlign.center),
           if (actionLabel != null) ...[
             const SizedBox(height: 20),
-            TrazaPrimaryButton(
-              label: actionLabel!,
-              onPressed: onAction,
-            ),
+            TrazaPrimaryButton(label: actionLabel!, onPressed: onAction),
           ],
         ],
       ),
@@ -1158,9 +1164,8 @@ class TrazaEmptyState extends StatelessWidget {
   }
 }
 
-
 // ─────────────────────────────────────────────
-//  FEEDBACK — TrazaLoadingSkeleton
+//  TrazaLoadingSkeleton
 // ─────────────────────────────────────────────
 
 class TrazaLoadingSkeleton extends StatefulWidget {
@@ -1202,6 +1207,12 @@ class _TrazaLoadingSkeletonState extends State<TrazaLoadingSkeleton>
 
   @override
   Widget build(BuildContext context) {
+    // ✅ colores del shimmer adaptativos
+    final base = TrazaThemeTokens.bgCard(context);
+    final highlight = TrazaThemeTokens.isDark(context)
+        ? const Color(0xFF252B3A)
+        : const Color(0xFFE5E9F5);
+
     return AnimatedBuilder(
       animation: _animation,
       builder: (_, __) => Container(
@@ -1212,11 +1223,7 @@ class _TrazaLoadingSkeletonState extends State<TrazaLoadingSkeleton>
           gradient: LinearGradient(
             begin: Alignment(_animation.value - 1, 0),
             end: Alignment(_animation.value + 1, 0),
-            colors: const [
-              Color(0xFF1A1E2A),
-              Color(0xFF252B3A),
-              Color(0xFF1A1E2A),
-            ],
+            colors: [base, highlight, base],
           ),
         ),
       ),
@@ -1224,19 +1231,22 @@ class _TrazaLoadingSkeletonState extends State<TrazaLoadingSkeleton>
   }
 }
 
-/// Helper para construir un grupo de skeletons que imitan una card de reporte.
 class TrazaReportCardSkeleton extends StatelessWidget {
   const TrazaReportCardSkeleton({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final tt = Theme.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: TrazaColors.bgSurface,
+        color: tt.colorScheme.surface,
         borderRadius: TrazaRadius.card,
-        border: Border.all(color: TrazaColors.border, width: 0.5),
+        border: Border.all(
+          color: tt.dividerTheme.color ?? TrazaColors.border,
+          width: 0.5,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1258,9 +1268,8 @@ class TrazaReportCardSkeleton extends StatelessWidget {
   }
 }
 
-
 // ─────────────────────────────────────────────
-//  FEEDBACK — TrazaStepTracker
+//  TrazaStepTracker
 // ─────────────────────────────────────────────
 
 class TrazaStepTracker extends StatelessWidget {
@@ -1278,7 +1287,13 @@ class TrazaStepTracker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final idx = _activeIdx;
+    final idx           = _activeIdx;
+    final successColor  = TrazaThemeTokens.success(context);
+    final warningColor  = TrazaThemeTokens.warning(context);
+    final borderColor   = TrazaThemeTokens.border(context);
+    final tertiary      = TrazaThemeTokens.textTertiary(context);
+    final tt            = Theme.of(context);
+
     return Row(
       children: List.generate(_steps.length * 2 - 1, (i) {
         if (i.isOdd) {
@@ -1288,15 +1303,13 @@ class TrazaStepTracker extends StatelessWidget {
               height: 2,
               margin: const EdgeInsets.symmetric(horizontal: 2),
               decoration: BoxDecoration(
-                color: stepIdx <= idx
-                    ? TrazaColors.success
-                    : TrazaColors.border,
+                color: stepIdx <= idx ? successColor : borderColor,
                 borderRadius: BorderRadius.circular(1),
               ),
             ),
           );
         }
-        final stepIdx = i ~/ 2;
+        final stepIdx  = i ~/ 2;
         final isDone   = stepIdx < idx;
         final isActive = stepIdx == idx;
         return Column(
@@ -1307,31 +1320,25 @@ class TrazaStepTracker extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: isDone
-                    ? TrazaColors.success
+                    ? successColor
                     : isActive
                         ? Colors.transparent
-                        : TrazaColors.bgCard,
+                        : tt.cardTheme.color,
                 border: isActive
-                    ? Border.all(color: TrazaColors.warning, width: 2)
+                    ? Border.all(color: warningColor, width: 2)
                     : null,
               ),
               child: isDone
-                  ? const Icon(Icons.check_rounded,
-                      size: 10, color: Colors.white)
+                  ? const Icon(Icons.check_rounded, size: 10, color: Colors.white)
                   : null,
             ),
             const SizedBox(height: 4),
             Text(
               _steps[stepIdx],
-              style: TrazaTextStyles.labelSmall.copyWith(
+              style: tt.textTheme.labelSmall?.copyWith(
                 fontSize: 8,
-                color: isActive
-                    ? TrazaColors.warning
-                    : isDone
-                        ? TrazaColors.success
-                        : TrazaColors.textTertiary,
-                fontWeight:
-                    isActive ? FontWeight.w600 : FontWeight.w400,
+                color: isActive ? warningColor : isDone ? successColor : tertiary,
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
               ),
             ),
           ],

@@ -1,17 +1,43 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
 
-:root {
-  --navy: #0C447C;
-  --navy-dark: #1B3A5C;
-  --red: #E24B4A;
-  --amber: #EF9F27;
-  --green: #1D9E75;
-  --bg: #F4F7FA;
-  --surface: #FFFFFF;
-  --border: #E2E8F0;
-  --text-primary: #1A2332;
-  --text-secondary: #6B7B8D;
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'IBM Plex Sans', sans-serif; background: var(--bg); color: var(--text-primary); }
+html, body, #root {
+  height: 100%;
+  font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+  background: #F5F7FC;
+  color: #111827;
+  -webkit-font-smoothing: antialiased;
+}
+
+:root {
+  --brand:    #0C447C;
+  --brand-2:  #3D6FE8;
+  --danger:   #E24B4A;
+  --warning:  #EF9F27;
+  --success:  #1D9E75;
+  --border:   #E5E7EB;
+  --text-secondary: #6B7280;
+}
+
+a { color: inherit; }
+
+button { font-family: inherit; }
+
+textarea, input, select { font-family: inherit; }
+
+/* Spinner animation */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #9CA3AF; }

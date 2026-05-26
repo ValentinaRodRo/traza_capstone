@@ -12,3 +12,5 @@ shapely
 fiona
 pyproj
 rtree
+apscheduler
+httpx

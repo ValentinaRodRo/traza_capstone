@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:geolocator/geolocator.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/shared_widgets.dart';
@@ -19,14 +20,65 @@ class _ReportFormPageState extends State<ReportFormPage> {
   final _locationCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
   bool _isAnonymous = true;
+  bool _isLocating = false;
   String? _locationError;
   String? _typeError;
+  double? _latitude;
+  double? _longitude;
 
   @override
   void dispose() {
     _locationCtrl.dispose();
     _descCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _fetchGpsLocation() async {
+    setState(() {
+      _isLocating = true;
+      _locationError = null;
+    });
+
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        setState(() => _locationError = 'Activa el GPS en tu dispositivo');
+        return;
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          setState(() => _locationError = 'Permiso de ubicación denegado');
+          return;
+        }
+      }
+      if (permission == LocationPermission.deniedForever) {
+        setState(() => _locationError =
+            'Permiso denegado permanentemente. Habilítalo en Ajustes.');
+        return;
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 10),
+        ),
+      );
+
+      setState(() {
+        _latitude = position.latitude;
+        _longitude = position.longitude;
+        _locationCtrl.text =
+            '${position.latitude.toStringAsFixed(5)}, ${position.longitude.toStringAsFixed(5)}';
+        _locationError = null;
+      });
+    } catch (e) {
+      setState(() => _locationError = 'No se pudo obtener la ubicación');
+    } finally {
+      setState(() => _isLocating = false);
+    }
   }
 
   void _submit() {
@@ -40,6 +92,8 @@ class _ReportFormPageState extends State<ReportFormPage> {
     context.read<ReportBloc>().add(SubmitReportEvent(
           type: _selectedType!,
           location: _locationCtrl.text.trim(),
+          latitude: _latitude,
+          longitude: _longitude,
           description: _descCtrl.text.trim().isNotEmpty
               ? _descCtrl.text.trim()
               : 'Sin descripción adicional.',
@@ -63,8 +117,7 @@ class _ReportFormPageState extends State<ReportFormPage> {
         }
       },
       child: Scaffold(
-        // ✅ TrazaColors.bg (era surfaceAlt)
-        backgroundColor: TrazaColors.bg,
+        backgroundColor: TrazaThemeTokens.bg(context),
         appBar: const TrazaAppBar(
           title: 'Reportar incidente',
           showBack: false,
@@ -80,17 +133,14 @@ class _ReportFormPageState extends State<ReportFormPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // ── Tipo de incidente ──────────────────────────────
-                        // ✅ TrazaFormSectionCard (era FormSectionCard)
+                        // ── Tipo de incidente ────────────────────────────
                         TrazaFormSectionCard(
                           label: '¿Qué ocurrió?',
                           child: Column(
                             children: [
                               if (_typeError != null)
-                                // ✅ TrazaErrorBanner (era InlineErrorBanner)
                                 TrazaErrorBanner(_typeError!),
                               ...ReportType.values.map((t) {
-                                // ✅ TrazaSelectableTile (era SelectableOptionTile)
                                 return TrazaSelectableTile(
                                   icon: _typeIcon(t),
                                   title: t.label,
@@ -108,10 +158,11 @@ class _ReportFormPageState extends State<ReportFormPage> {
 
                         const SizedBox(height: TrazaSpacing.md),
 
-                        // ── Ubicación ──────────────────────────────────────
+                        // ── Ubicación ────────────────────────────────────
                         TrazaFormSectionCard(
                           label: '¿Dónde ocurrió?',
                           child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               if (_locationError != null)
                                 TrazaErrorBanner(_locationError!),
@@ -124,34 +175,49 @@ class _ReportFormPageState extends State<ReportFormPage> {
                                           () => _locationError = null),
                                       style: const TextStyle(fontSize: 13),
                                       decoration: InputDecoration(
-                                        hintText:
-                                            'Parque principal, Calle 11…',
-                                        prefixIcon: const Icon(
+                                        hintText: 'Parque principal, Calle 11…',
+                                        prefixIcon: Icon(
                                           Icons.place_rounded,
                                           size: 17,
-                                          // ✅ TrazaColors.textTertiary (sin cambio, ya existía)
-                                          color: TrazaColors.textTertiary,
+                                          color: TrazaThemeTokens.textTertiary(context),
                                         ),
                                       ),
                                     ),
                                   ),
                                   const SizedBox(width: TrazaSpacing.sm),
                                   _GpsButton(
-                                    onTap: () => setState(() {
-                                      _locationCtrl.text =
-                                          'Parque principal, Chía (GPS)';
-                                      _locationError = null;
-                                    }),
+                                    isLoading: _isLocating,
+                                    onTap: _fetchGpsLocation,
                                   ),
                                 ],
                               ),
+                              if (_latitude != null) ...[
+                                const SizedBox(height: 6),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.check_circle_outline,
+                                      size: 13,
+                                      color: TrazaThemeTokens.success(context),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'GPS obtenido',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: TrazaThemeTokens.success(context),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ],
                           ),
                         ),
 
                         const SizedBox(height: TrazaSpacing.md),
 
-                        // ── Descripción ────────────────────────────────────
+                        // ── Descripción ──────────────────────────────────
                         TrazaFormSectionCard(
                           label: 'Descripción (opcional)',
                           child: TextField(
@@ -164,10 +230,10 @@ class _ReportFormPageState extends State<ReportFormPage> {
                             ),
                           ),
                         ),
-
+                        
                         const SizedBox(height: TrazaSpacing.md),
 
-                        // ── Reporte anónimo ────────────────────────────────
+                        // ── Reporte anónimo ──────────────────────────────
                         TrazaFormSectionCard(
                           child: Row(
                             children: [
@@ -175,35 +241,34 @@ class _ReportFormPageState extends State<ReportFormPage> {
                                 width: 40,
                                 height: 40,
                                 decoration: BoxDecoration(
-                                  // ✅ TrazaColors.purpleSub (era purpleLight)
-                                  color: TrazaColors.purpleSub,
+                                  color: TrazaThemeTokens.purpleSub(context),
                                   borderRadius:
                                       BorderRadius.circular(TrazaRadius.md),
                                 ),
-                                child: const Icon(
+                                child: Icon(
                                   Icons.shield_outlined,
-                                  color: TrazaColors.purple,
+                                  color: TrazaThemeTokens.purple(context),
                                   size: 20,
                                 ),
                               ),
                               const SizedBox(width: TrazaSpacing.md),
-                              const Expanded(
+                              Expanded(
                                 child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
                                       'Reporte anónimo',
                                       style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w600,
+                                        color: TrazaThemeTokens.textPrimary(context),
                                       ),
                                     ),
                                     Text(
                                       'Tu identidad no será visible',
                                       style: TextStyle(
                                         fontSize: 11,
-                                        color: TrazaColors.textSecondary,
+                                        color: TrazaThemeTokens.textSecondary(context),
                                       ),
                                     ),
                                   ],
@@ -213,8 +278,7 @@ class _ReportFormPageState extends State<ReportFormPage> {
                                 value: _isAnonymous,
                                 onChanged: (v) =>
                                     setState(() => _isAnonymous = v),
-                                // ✅ TrazaColors.brand (era navyMid)
-                                activeColor: TrazaColors.brand,
+                                activeColor: TrazaThemeTokens.brand(context),
                               ),
                             ],
                           ),
@@ -222,26 +286,24 @@ class _ReportFormPageState extends State<ReportFormPage> {
 
                         const SizedBox(height: TrazaSpacing.md),
 
-                        // ── Hint denuncia formal ───────────────────────────
-                        // ✅ TrazaInfoBanner (era InfoHintBanner)
+                        // ── Hint denuncia formal ─────────────────────────
                         TrazaInfoBanner(
                           child: Text.rich(
                             TextSpan(
                               text: 'Denuncia formal: ',
-                              style: const TextStyle(
-                                  fontSize: 11,
-                                  color: TrazaColors.infoText),
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: TrazaThemeTokens.infoText(context),
+                              ),
                               children: const [
                                 TextSpan(
                                   text: 'fiscalia.gov.co',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.w600),
+                                  style: TextStyle(fontWeight: FontWeight.w600),
                                 ),
                                 TextSpan(text: '  ·  Línea '),
                                 TextSpan(
                                   text: '122',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.w600),
+                                  style: TextStyle(fontWeight: FontWeight.w600),
                                 ),
                               ],
                             ),
@@ -254,16 +316,14 @@ class _ReportFormPageState extends State<ReportFormPage> {
                   ),
                 ),
 
-                // ── CTA pegado al fondo ────────────────────────────────────
+                // ── CTA pegado al fondo ──────────────────────────────────
                 Container(
-                  // ✅ TrazaColors.bgSurface (era surface)
-                  color: TrazaColors.bgSurface,
+                  color: TrazaThemeTokens.bgSurface(context),
                   padding: EdgeInsets.fromLTRB(
                     TrazaSpacing.lg,
                     TrazaSpacing.md,
                     TrazaSpacing.lg,
-                    MediaQuery.of(context).padding.bottom +
-                        TrazaSpacing.md,
+                    MediaQuery.of(context).padding.bottom + TrazaSpacing.md,
                   ),
                   child: TrazaPrimaryButton(
                     label: 'Enviar reporte',
@@ -298,25 +358,34 @@ class _ReportFormPageState extends State<ReportFormPage> {
 // ── GPS Button ────────────────────────────────────────────────────────────────
 class _GpsButton extends StatelessWidget {
   final VoidCallback onTap;
-  const _GpsButton({required this.onTap});
+  final bool isLoading;
+
+  const _GpsButton({required this.onTap, this.isLoading = false});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: isLoading ? null : onTap,
       child: Container(
         width: 44,
         height: 44,
         decoration: BoxDecoration(
-          // ✅ TrazaColors.brand (era navyMid)
-          color: TrazaColors.brand,
+          color: TrazaThemeTokens.brand(context),
           borderRadius: BorderRadius.circular(TrazaRadius.md),
         ),
-        child: const Icon(
-          Icons.my_location_rounded,
-          color: Colors.white,
-          size: 20,
-        ),
+        child: isLoading
+            ? const Padding(
+                padding: EdgeInsets.all(12),
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2,
+                ),
+              )
+            : const Icon(
+                Icons.my_location_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
       ),
     );
   }
