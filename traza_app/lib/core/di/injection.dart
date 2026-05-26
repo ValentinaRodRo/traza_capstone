@@ -1,5 +1,9 @@
 import 'package:get_it/get_it.dart';
+<<<<<<< HEAD
 import 'package:http/http.dart' as http;
+=======
+import 'package:http/http.dart' as http;                          // ← nuevo
+>>>>>>> origin/main
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 

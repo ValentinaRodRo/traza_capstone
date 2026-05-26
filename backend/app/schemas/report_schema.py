@@ -1,6 +1,11 @@
+<<<<<<< HEAD
 from pydantic import BaseModel, ConfigDict, field_serializer
 from datetime import datetime
 from typing import Optional
+=======
+from pydantic import BaseModel, ConfigDict
+from datetime import datetime
+>>>>>>> origin/main
 
 
 class ReportCreate(BaseModel):
@@ -9,7 +14,6 @@ class ReportCreate(BaseModel):
     latitude: float
     longitude: float
     anonymous: bool = True
-
 
 class ReportUpdate(BaseModel):
     status: str
