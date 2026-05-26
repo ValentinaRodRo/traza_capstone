@@ -33,16 +33,7 @@ def create_new_report(
     db: Session = Depends(get_db),
     payload=Security(JWTBearer())
 ):
-<<<<<<< HEAD
     return create_report(db, report, payload["user_id"])
-=======
-
-    return create_report(
-        db,
-        report,
-        payload["user_id"]
-    )
->>>>>>> origin/main
 
 
 @router.get("/")
@@ -52,24 +43,9 @@ def list_reports(
     db: Session = Depends(get_db),
     payload=Security(JWTBearer())
 ):
-<<<<<<< HEAD
     if payload["role"] != "authority":
         return {"error": "No autorizado"}
     return get_reports(db, status, incident_type)
-=======
-
-    if payload["role"] != "authority":
-
-        return {
-            "error": "No autorizado"
-        }
-
-    return get_reports(
-        db,
-        status,
-        incident_type
-    )
->>>>>>> origin/main
 
 
 @router.get("/internal/ml")
