@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisco
 from fastapi.security import APIKeyHeader
 
 from app.config import ML_SERVICE_API_KEY
-from app.schemas.zone_schema import ZonesBroadcast, ZoneSnapshot
+from app.schemas.zone_schema import ZonesBroadcast
 from app.utils.websocket_manager import ws_manager
 
 logger = logging.getLogger(__name__)
@@ -41,14 +41,30 @@ async def zones_websocket(ws: WebSocket):
     El cliente puede enviar "ping" para mantener la conexión viva;
     el servidor responde "pong".
     """
+    # Capturar la identidad exacta del cliente (IP y puerto de origen)
+    client_address = f"{ws.client.host}:{ws.client.port}" if ws.client else "Desconocido"
+    
+    logger.info("🚀 INTENTO DE CONEXIÓN: Entrando desde %s", client_address)
+    
     await ws_manager.connect(ws)
+    
+    logger.info("✅ CONECTADO: [%s] se unió con éxito.", client_address)
+    
     try:
         while True:
             data = await ws.receive_text()
             if data.strip().lower() == "ping":
+                # logger.info("🏓 PING recibido de [%s]", client_address) # Opcional
                 await ws.send_text("pong")
+            else:
+                logger.info("📩 Mensaje inesperado de [%s]: %s", client_address, data)
+                
     except WebSocketDisconnect:
         ws_manager.disconnect(ws)
+        logger.warning("❌ CONEXIÓN CERRADA: El cliente [%s] se ha desconectado.", client_address)
+        
+    except Exception as e:
+        logger.error("🚨 ERROR ANÓMALO en cliente [%s]: %s", client_address, str(e))
 
 
 # ──────────────────────────────────────────────────────────────────────────────
