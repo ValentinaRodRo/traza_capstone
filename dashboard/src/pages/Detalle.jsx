@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import TopBar from '../components/layout/TopBar';
+import TopBar from '../components/layout/Topbar';
 import Badge from '../components/ui/Badge';
 import { fetchReportByCode, fetchReportHistory, updateReportStatus, processReportML } from '../services/api';
 
