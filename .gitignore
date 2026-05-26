@@ -23,7 +23,6 @@
 # 3. Reglas para "dashboard" (Node.js / Vite)
 # ==========================================
 **/node_modules/
-**/dist/
 **/build/
 *.log
 .eslintcache
