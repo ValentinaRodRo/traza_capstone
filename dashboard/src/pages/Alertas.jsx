@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import TopBar from '../components/layout/Topbar';
 import { fetchReports } from '../services/api';
+import { useNavigate } from 'react-router-dom';
 
 const LEVELS = {
   RECIBIDO: {
@@ -30,6 +31,7 @@ const LEVELS = {
 };
 
 export default function Alertas() {
+  const navigate = useNavigate();
   const [alerts, setAlerts]           = useState([]);
   const [loading, setLoading]         = useState(true);
   const [filter, setFilter]           = useState('Todos');
@@ -153,16 +155,16 @@ export default function Alertas() {
 
                   {/* Actions */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-end' }}>
-                    <a
-                      href={`/detalle/${a.tracking_code}`}
+                    <button
+                      onClick={() => navigate(`/detalle/${a.tracking_code}`)}
                       style={{
                         padding: '6px 14px', background: '#0C447C', color: 'white',
                         borderRadius: 8, fontSize: 12, fontWeight: 600, textDecoration: 'none',
-                        whiteSpace: 'nowrap',
+                        whiteSpace: 'nowrap', border: 'none', cursor: 'pointer',
                       }}
                     >
                       Atender →
-                    </a>
+                    </button>
                   </div>
                 </div>
               );
