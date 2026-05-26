@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import TopBar from '../components/layout/TopBar';
+import TopBar from '../components/layout/Topbar';
 import StatCard from '../components/ui/StatCard';
 import ReportCard from '../components/ui/ReportCard';
 import { fetchReports, analyzeAllReportsML } from '../services/api';

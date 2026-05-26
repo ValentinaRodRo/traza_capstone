@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import TopBar from '../components/layout/TopBar';
+import TopBar from '../components/layout/Topbar';
 import { fetchActiveZones, fetchReports } from '../services/api';
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
