@@ -1,114 +1,340 @@
-import { useEffect, useRef } from 'react';
-import L from 'leaflet';
-import 'leaflet.heat';
+import { useEffect, useRef, useState } from 'react';
 import TopBar from '../components/layout/TopBar';
+import { fetchActiveZones, fetchReports } from '../services/api';
 
-// Puntos de calor: [lat, lng, intensidad]
-// Coordenadas reales de zonas de Chía, Cundinamarca
-const heatPoints = [
-  // Parque central Chía — CRÍTICO
-  [4.8614, -73.9856, 1.0],
-  [4.8618, -73.9852, 0.9],
-  [4.8610, -73.9860, 0.8],
-  [4.8620, -73.9848, 0.7],
-  [4.8606, -73.9864, 0.6],
-  [4.8622, -73.9858, 0.5],
+const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
-  // Zona comercial (Calle 11) — ALTO
-  [4.8580, -73.9820, 0.7],
-  [4.8575, -73.9815, 0.6],
-  [4.8585, -73.9825, 0.5],
-  [4.8570, -73.9810, 0.4],
+const RISK_COLORS = {
+  bajo:    { fill: '#1D9E75', stroke: '#0F6E56' },
+  medio:   { fill: '#EF9F27', stroke: '#BA7517' },
+  alto:    { fill: '#E24B4A', stroke: '#A32D2D' },
+  critico: { fill: '#7B0000', stroke: '#500000' },
+};
 
-  // La Capilla — BAJO
-  [4.8650, -73.9900, 0.3],
-  [4.8645, -73.9895, 0.2],
-  [4.8655, -73.9905, 0.2],
-];
-
-const zonas = [
-  { nombre: 'Parque central', nivel: 'CRÍTICO', reportes: 23, color: '#E24B4A', lat: 4.8614, lng: -73.9856 },
-  { nombre: 'Zona comercial', nivel: 'ALTO',    reportes: 11, color: '#EF9F27', lat: 4.8580, lng: -73.9820 },
-  { nombre: 'La Capilla',     nivel: 'BAJO',    reportes: 4,  color: '#1D9E75', lat: 4.8650, lng: -73.9900 },
-];
+function loadGoogleMaps(apiKey) {
+  return new Promise((resolve, reject) => {
+    if (window.google?.maps) { resolve(); return; }
+    if (window._gmLoading) {
+      window._gmLoading.then(resolve).catch(reject);
+      return;
+    }
+    const cb = `_gm_cb_${Date.now()}`;
+    window._gmLoading = new Promise((res, rej) => {
+      window[cb] = () => { delete window[cb]; delete window._gmLoading; res(); resolve(); };
+      const s = document.createElement('script');
+      // ✅ Sin &libraries=visualization — ya no se usa HeatmapLayer
+      s.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=${cb}`;
+      s.onerror = (e) => { delete window._gmLoading; rej(e); reject(e); };
+      document.head.appendChild(s);
+    });
+  });
+}
 
 export default function Mapa() {
-  const mapRef = useRef(null);
-  const mapInstanceRef = useRef(null);
+  const mapRef         = useRef(null);
+  const mapInstance    = useRef(null);
+  const heatLayer      = useRef(null);
+  const markersRef     = useRef([]);
+  const initializedRef = useRef(false);
+
+  const [activeLayer, setActiveLayer] = useState('predictivo');
+  const [zones, setZones]             = useState([]);
+  const [reports, setReports]         = useState([]);
+  const [loading, setLoading]         = useState(true);
+  const [error, setError]             = useState('');
+  const [selected, setSelected]       = useState(null);
 
   useEffect(() => {
-    if (mapInstanceRef.current) return; // ya inicializado
+    async function init() {
+      setLoading(true);
+      setError('');
+      try {
+        await loadGoogleMaps(GOOGLE_MAPS_API_KEY);
 
-    const map = L.map(mapRef.current, {
-      center: [4.8614, -73.9856],
-      zoom: 15,
-    });
+        if (!mapRef.current) return;
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors',
-    }).addTo(map);
+        const map = new window.google.maps.Map(mapRef.current, {
+          center: { lat: 4.8626, lng: -74.0321 },
+          zoom: 14,
+          mapTypeId: 'roadmap',
+          styles: [
+            { elementType: 'geometry',          stylers: [{ color: '#f5f5f5' }] },
+            { elementType: 'labels.icon',        stylers: [{ visibility: 'off' }] },
+            { elementType: 'labels.text.fill',   stylers: [{ color: '#616161' }] },
+            { elementType: 'labels.text.stroke', stylers: [{ color: '#f5f5f5' }] },
+            { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
+            { featureType: 'road.arterial', elementType: 'labels.text.fill', stylers: [{ color: '#757575' }] },
+            { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#c9c9c9' }] },
+          ],
+          disableDefaultUI: false,
+          zoomControl: true,
+          mapTypeControl: false,
+          streetViewControl: false,
+          fullscreenControl: true,
+        });
+        mapInstance.current = map;
 
-    // Capa de calor
-    L.heatLayer(heatPoints, {
-      radius: 35,
-      blur: 25,
-      maxZoom: 17,
-      gradient: {
-        0.2: '#1D9E75',
-        0.5: '#EF9F27',
-        0.8: '#E24B4A',
-        1.0: '#7B0000',
-      },
-    }).addTo(map);
+        const [zonesData, reportsData] = await Promise.all([
+          fetchActiveZones(),
+          fetchReports().catch(() => []),
+        ]);
 
-    // Marcadores por zona
-    zonas.forEach(z => {
-      const marker = L.circleMarker([z.lat, z.lng], {
-        radius: 8,
-        fillColor: z.color,
-        color: '#fff',
-        weight: 2,
-        fillOpacity: 0.9,
-      }).addTo(map);
+        const z = zonesData.zones || [];
+        const r = reportsData    || [];
 
-      marker.bindPopup(`
-        <div style="font-family: sans-serif; min-width: 140px;">
-          <div style="font-weight: 600; font-size: 13px; margin-bottom: 4px;">${z.nombre}</div>
-          <div style="font-size: 12px; color: ${z.color}; font-weight: 500;">${z.nivel}</div>
-          <div style="font-size: 12px; color: #666; margin-top: 2px;">${z.reportes} reportes</div>
-        </div>
-      `);
-    });
+        initializedRef.current = true;
+        renderLayer(map, markersRef, heatLayer, z, r, 'predictivo', setSelected);
 
-    mapInstanceRef.current = map;
+        setZones(z);
+        setReports(r);
+      } catch (e) {
+        console.error(e);
+        setError('Error cargando el mapa. Verifica tu API key de Google Maps.');
+      } finally {
+        setLoading(false);
+      }
+    }
+    init();
+
+    return () => {
+      clearMarkers(markersRef, heatLayer);
+      mapInstance.current    = null;
+      initializedRef.current = false;
+    };
   }, []);
 
+  useEffect(() => {
+    if (!mapInstance.current || !initializedRef.current) return;
+    clearMarkers(markersRef, heatLayer);
+    renderLayer(mapInstance.current, markersRef, heatLayer, zones, reports, activeLayer, setSelected);
+  }, [activeLayer]);
+
   return (
-    <div>
-      <TopBar title="Mapa analítico" />
+    <div style={{ background: '#F5F7FC', minHeight: '100vh' }}>
+      <TopBar
+        title="Mapa analítico"
+        subtitle="Chía, Cundinamarca · Datos en tiempo real"
+      />
+
       <div style={{ padding: 28 }}>
-        <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16 }}>
-          Datos agregados — toma de decisiones · Chía, Cundinamarca
-        </p>
-
-        {/* Mapa */}
-        <div ref={mapRef} style={{ height: 480, borderRadius: 12, overflow: 'hidden', border: '1px solid var(--border)', marginBottom: 16 }} />
-
-        {/* Leyenda */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--text-secondary)', marginBottom: 20, maxWidth: 700 }}>
-          <span>Bajo</span>
-          <div style={{ height: 8, flex: 1, borderRadius: 4, background: 'linear-gradient(to right, #1D9E75, #EF9F27, #E24B4A, #7B0000)' }} />
-          <span>Crítico</span>
+        <div style={{ display: 'flex', gap: 10, marginBottom: 18, alignItems: 'center' }}>
+          <span style={{ fontSize: 13, color: '#6B7280', fontWeight: 500 }}>Capa activa:</span>
+          {[
+            { key: 'predictivo', label: '🔮 Mapa predictivo (ML)' },
+            { key: 'reportes',   label: '📍 Reportes reales' },
+          ].map(l => (
+            <button
+              key={l.key}
+              onClick={() => setActiveLayer(l.key)}
+              style={{
+                padding: '8px 16px', borderRadius: 20, fontSize: 13, cursor: 'pointer',
+                border: '1px solid', transition: 'all .15s',
+                background:  activeLayer === l.key ? '#0C447C' : 'white',
+                color:       activeLayer === l.key ? 'white'   : '#4B5563',
+                borderColor: activeLayer === l.key ? '#0C447C' : '#E5E7EB',
+                fontWeight:  activeLayer === l.key ? 600       : 400,
+              }}
+            >
+              {l.label}
+            </button>
+          ))}
         </div>
 
-        {/* Recomendación */}
-        <div style={{ background: '#fff', borderRadius: 12, padding: 18, border: '1px solid var(--border)', borderLeft: '4px solid #0C447C', maxWidth: 700 }}>
-          <div style={{ fontWeight: 600, marginBottom: 6 }}>Recomendación del sistema</div>
-          <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-            Concentrar patrullaje en Parque central (23 reportes). Reforzar Zona comercial en horario nocturno.
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: 20 }}>
+          <div>
+            {error && (
+              <div style={{
+                padding: '12px 16px', background: '#FEF2F2',
+                border: '1px solid #FECACA', borderRadius: 10,
+                fontSize: 13, color: '#B91C1C', marginBottom: 14,
+              }}>
+                ⚠ {error}
+              </div>
+            )}
+
+            <div style={{ position: 'relative' }}>
+              <div
+                ref={mapRef}
+                style={{
+                  height: 520, borderRadius: 14, overflow: 'hidden',
+                  border: '1px solid #E5E7EB', background: '#E5E7EB',
+                }}
+              />
+              {loading && (
+                <div style={{
+                  position: 'absolute', inset: 0,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: 'rgba(245,247,252,0.8)', borderRadius: 14,
+                  fontSize: 13, color: '#6B7280',
+                }}>
+                  Cargando mapa…
+                </div>
+              )}
+            </div>
+
+            <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+              {Object.entries(RISK_COLORS).map(([k, v]) => (
+                <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#6B7280' }}>
+                  <div style={{ width: 12, height: 12, borderRadius: '50%', background: v.fill }} />
+                  <span style={{ textTransform: 'capitalize' }}>{k}</span>
+                </div>
+              ))}
+              <span style={{ fontSize: 11, color: '#9CA3AF', marginLeft: 'auto' }}>
+                {activeLayer === 'predictivo'
+                  ? `${zones.length} zonas · ML actualiza cada 5 min`
+                  : `${reports.length} reportes activos`}
+              </span>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {selected ? (
+              <div style={{ background: 'white', borderRadius: 14, padding: 18, border: '1px solid #E5E7EB' }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#111827', marginBottom: 12 }}>Zona seleccionada</div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: '#0C447C', marginBottom: 8 }}>{selected.name}</div>
+                <div style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px',
+                  background: (RISK_COLORS[selected.risk_level]?.fill || '#9CA3AF') + '20',
+                  borderRadius: 20, marginBottom: 12,
+                }}>
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: RISK_COLORS[selected.risk_level]?.fill || '#9CA3AF' }} />
+                  <span style={{ fontSize: 12, fontWeight: 600, color: RISK_COLORS[selected.risk_level]?.fill || '#9CA3AF', textTransform: 'capitalize' }}>
+                    {selected.risk_level}
+                  </span>
+                </div>
+                {selected.score !== undefined && (
+                  <div>
+                    <div style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 4 }}>PUNTAJE DE RIESGO</div>
+                    <div style={{ fontSize: 22, fontWeight: 700, color: '#111827' }}>{Math.round(selected.score * 100)}%</div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div style={{ background: 'white', borderRadius: 14, padding: 18, border: '1px solid #E5E7EB', fontSize: 13, color: '#9CA3AF', textAlign: 'center' }}>
+                Haz clic en una zona del mapa para ver detalles
+              </div>
+            )}
+
+            <div style={{ background: 'white', borderRadius: 14, padding: 18, border: '1px solid #E5E7EB' }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#111827', marginBottom: 12 }}>
+                {activeLayer === 'predictivo' ? 'Zonas de riesgo' : 'Reportes recientes'}
+              </div>
+              {activeLayer === 'predictivo' ? (
+                zones.length === 0
+                  ? <div style={{ fontSize: 13, color: '#9CA3AF' }}>Sin datos del ML aún.</div>
+                  : zones.sort((a, b) => (b.score || 0) - (a.score || 0)).slice(0, 6).map((z, i) => (
+                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                        <div>
+                          <div style={{ fontSize: 13, fontWeight: 500, color: '#374151' }}>{z.name}</div>
+                          <div style={{ fontSize: 11, color: '#9CA3AF', textTransform: 'capitalize' }}>{z.risk_level}</div>
+                        </div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: RISK_COLORS[z.risk_level]?.fill || '#9CA3AF' }}>
+                          {Math.round((z.score || 0) * 100)}%
+                        </div>
+                      </div>
+                    ))
+              ) : (
+                reports.length === 0
+                  ? <div style={{ fontSize: 13, color: '#9CA3AF' }}>Sin reportes.</div>
+                  : reports.slice(0, 6).map((r, i) => (
+                      <div key={i} style={{ marginBottom: 10 }}>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: '#374151' }}>{r.incident_type}</div>
+                        <div style={{ fontSize: 11, color: '#9CA3AF' }}>{r.status} · {r.tracking_code}</div>
+                      </div>
+                    ))
+              )}
+            </div>
+
+            <div style={{ background: '#EEF4FF', borderRadius: 14, padding: 16, border: '1px solid #BFDBFE' }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#1E40AF', marginBottom: 6 }}>🔮 Mapa predictivo</div>
+              <div style={{ fontSize: 12, color: '#3B82F6', lineHeight: 1.6 }}>
+                Las zonas de riesgo son calculadas por el servicio de ML cada 5 minutos, considerando historial de reportes, tipo de incidente y horario.
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function clearMarkers(markersRef, heatLayer) {
+  markersRef.current.forEach(m => m.setMap(null));
+  markersRef.current = [];
+  if (heatLayer.current) {
+    heatLayer.current.setMap(null);
+    heatLayer.current = null;
+  }
+}
+
+function renderLayer(map, markersRef, heatLayer, zones, reports, layer, setSelected) {
+  const google = window.google;
+  if (!google?.maps) return;
+
+  if (layer === 'predictivo') {
+    zones.forEach(z => {
+      const lat = z.latitude ?? z.lat;
+      const lng = z.longitude ?? z.lng;
+      if (!lat || !lng) return;
+
+      const colors = RISK_COLORS[z.risk_level] || RISK_COLORS.bajo;
+      const score  = z.score || 0.5;
+
+      // ✅ Círculo tipo heatmap — reemplaza HeatmapLayer deprecado
+      const circle = new google.maps.Circle({
+        center:        { lat, lng },
+        radius:        300 + score * 400,
+        map,
+        fillColor:     colors.fill,
+        fillOpacity:   0.18 + score * 0.22,
+        strokeColor:   colors.stroke,
+        strokeOpacity: 0.4,
+        strokeWeight:  1,
+        clickable:     true,
+      });
+      circle.addListener('click', () => setSelected(z));
+      markersRef.current.push(circle);
+
+      // Marcador puntual encima
+      const marker = new google.maps.Marker({
+        position: { lat, lng },
+        map,
+        icon: {
+          path:         google.maps.SymbolPath.CIRCLE,
+          scale:        10,
+          fillColor:    colors.fill,
+          fillOpacity:  0.9,
+          strokeColor:  colors.stroke,
+          strokeWeight: 2,
+        },
+        title: z.name,
+      });
+      marker.addListener('click', () => setSelected(z));
+      markersRef.current.push(marker);
+    });
+
+  } else {
+    reports.forEach(r => {
+      if (!r.latitude || !r.longitude) return;
+      const marker = new google.maps.Marker({
+        position: { lat: r.latitude, lng: r.longitude },
+        map,
+        icon: {
+          path:         google.maps.SymbolPath.CIRCLE,
+          scale:        8,
+          fillColor:    '#0C447C',
+          fillOpacity:  0.85,
+          strokeColor:  '#071E3D',
+          strokeWeight: 2,
+        },
+        title: r.incident_type,
+      });
+      marker.addListener('click', () =>
+        setSelected({ name: r.incident_type, risk_level: 'medio', score: 0.5, ...r })
+      );
+      markersRef.current.push(marker);
+    });
+  }
 }

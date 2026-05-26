@@ -33,12 +33,7 @@ def create_new_report(
     db: Session = Depends(get_db),
     payload=Security(JWTBearer())
 ):
-
-    return create_report(
-        db,
-        report,
-        payload["user_id"]
-    )
+    return create_report(db, report, payload["user_id"])
 
 
 @router.get("/")
@@ -48,18 +43,9 @@ def list_reports(
     db: Session = Depends(get_db),
     payload=Security(JWTBearer())
 ):
-
     if payload["role"] != "authority":
-
-        return {
-            "error": "No autorizado"
-        }
-
-    return get_reports(
-        db,
-        status,
-        incident_type
-    )
+        return {"error": "No autorizado"}
+    return get_reports(db, status, incident_type)
 
 
 @router.get("/internal/ml")
@@ -67,31 +53,16 @@ def ml_reports(
     db: Session = Depends(get_db),
     _: None = Depends(verify_ml_service)
 ):
-
     reports = db.query(Report).all()
-
     return [
-
         {
-            "id":
-                report.id,
-
-            "incident_type":
-                report.incident_type,
-
-            "description":
-                report.description,
-
-            "latitude":
-                report.latitude,
-
-            "longitude":
-                report.longitude,
-
-            "timestamp":
-                report.created_at
+            "id":            report.id,
+            "incident_type": report.incident_type,
+            "description":   report.description,
+            "latitude":      report.latitude,
+            "longitude":     report.longitude,
+            "timestamp":     report.created_at,
         }
-
         for report in reports
     ]
 
@@ -101,11 +72,7 @@ def my_reports(
     db: Session = Depends(get_db),
     payload=Security(JWTBearer())
 ):
-
-    return get_user_reports(
-        db,
-        payload["user_id"]
-    )
+    return get_user_reports(db, payload["user_id"])
 
 
 @router.put("/{tracking_code}/status")
@@ -115,12 +82,8 @@ def update_report(
     db: Session = Depends(get_db),
     payload=Security(JWTBearer())
 ):
-
     if payload["role"] != "authority":
-
-        return {
-            "error": "No autorizado"
-        }
+        return {"error": "No autorizado"}
 
     report = update_report_status(
         db,
@@ -131,10 +94,7 @@ def update_report(
     )
 
     if not report:
-
-        return {
-            "error": "Reporte no encontrado"
-        }
+        return {"error": "Reporte no encontrado"}
 
     return report
 
@@ -145,31 +105,33 @@ def delete_report(
     db: Session = Depends(get_db),
     payload=Security(JWTBearer())
 ):
-
     if payload["role"] != "authority":
+        return {"error": "No autorizado"}
 
-        return {
-            "error": "No autorizado"
-        }
+    report = db.query(Report).filter(Report.id == report_id).first()
 
+    if not report:
+        return {"error": "Reporte no encontrado"}
+
+    db.delete(report)
+    db.commit()
+    return {"message": "Reporte eliminado correctamente"}
+
+
+@router.get("/{tracking_code}")
+def get_report(
+    tracking_code: str,
+    db: Session = Depends(get_db),
+    payload=Security(JWTBearer())
+):
     report = db.query(Report).filter(
-        Report.id == report_id
+        Report.tracking_code == tracking_code
     ).first()
 
     if not report:
+        return {"error": "Reporte no encontrado"}
 
-        return {
-            "error": "Reporte no encontrado"
-        }
-
-    db.delete(report)
-
-    db.commit()
-
-    return {
-        "message":
-            "Reporte eliminado correctamente"
-    }
+    return report
 
 
 @router.get("/{tracking_code}/history")
@@ -178,17 +140,9 @@ def report_history(
     db: Session = Depends(get_db),
     payload=Security(JWTBearer())
 ):
-
-    history = get_report_history(
-        db,
-        tracking_code
-    )
+    history = get_report_history(db, tracking_code)
 
     if not history:
-
-        return {
-            "error":
-                "Historial no encontrado"
-        }
+        return {"error": "Historial no encontrado"}
 
     return history

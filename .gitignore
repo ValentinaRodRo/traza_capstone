@@ -1,5 +1,5 @@
 # ==========================================
-# 1. Python & Machine Learning (mlserviice)
+# 1. Python & Machine Learning (mlservice)
 # ==========================================
 **/venv/
 **/.venv/
@@ -26,11 +26,18 @@
 **/dist/
 **/build/
 *.log
-
 .eslintcache
 
 # ==========================================
-# 4. Configuraciones de Editores (IDEs)
+# 4. Variables de entorno (.env)
+# ==========================================
+.env
+.env.*
+**/.env
+**/.env.*
+
+# ==========================================
+# 5. Configuraciones de Editores (IDEs)
 # ==========================================
 .vscode/
 .idea/

@@ -74,32 +74,35 @@ class _LoginPageState extends State<LoginPage>
   }
 
   void _showError(String message) {
+    final tt = Theme.of(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
           children: [
-            const Icon(
+            Icon(
               Icons.error_outline_rounded,
-              color: TrazaColors.danger,
+              color: tt.colorScheme.error,
               size: 16,
             ),
             const SizedBox(width: TrazaSpacing.sm),
             Expanded(
               child: Text(
                 message,
-                // bodyMedium = textSecondary por defecto, forzamos primary
-                style: TrazaTextStyles.bodyMedium.copyWith(
-                  color: TrazaColors.textPrimary,
+                style: tt.textTheme.bodyMedium?.copyWith(
+                  color: tt.colorScheme.onSurface,
                 ),
               ),
             ),
           ],
         ),
-        backgroundColor: TrazaColors.bgCard,
+        backgroundColor: tt.cardTheme.color,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: TrazaRadius.card,
-          side: const BorderSide(color: TrazaColors.border, width: 0.5),
+          side: BorderSide(
+            color: tt.dividerTheme.color ?? TrazaColors.border,
+            width: 0.5,
+          ),
         ),
         margin: const EdgeInsets.all(TrazaSpacing.lg),
         duration: const Duration(seconds: 4),
@@ -123,7 +126,7 @@ class _LoginPageState extends State<LoginPage>
     return BlocListener<AuthBloc, AuthState>(
       listener: _handleState,
       child: Scaffold(
-        backgroundColor: TrazaColors.bg,
+        // ✅ Hereda scaffoldBackgroundColor del tema
         body: SafeArea(
           child: FadeTransition(
             opacity: _fadeAnim,
@@ -141,17 +144,15 @@ class _LoginPageState extends State<LoginPage>
                     children: [
                       const SizedBox(height: 52),
 
-                      // ── Header ──────────────────────────────────────
                       const _TrazaAuthHeader(
                         icon: Icons.location_on_rounded,
+                        useLogo: true,              // ← añade esto
                         title: 'Bienvenido',
-                        subtitle:
-                            'Ingresa a tu cuenta para ver\nlas zonas de riesgo en Chía.',
+                        subtitle: 'Ingresa a tu cuenta para ver\nlas zonas de riesgo en Chía.',
                       ),
 
                       const SizedBox(height: TrazaSpacing.xxxl + TrazaSpacing.sm),
 
-                      // ── Email ────────────────────────────────────────
                       _TrazaField(
                         controller: _emailController,
                         label: 'Correo electrónico',
@@ -168,7 +169,6 @@ class _LoginPageState extends State<LoginPage>
 
                       const SizedBox(height: TrazaSpacing.md),
 
-                      // ── Contraseña ───────────────────────────────────
                       _TrazaField(
                         controller: _passwordController,
                         label: 'Contraseña',
@@ -186,7 +186,6 @@ class _LoginPageState extends State<LoginPage>
                                 ? Icons.visibility_off_outlined
                                 : Icons.visibility_outlined,
                             size: 18,
-                            color: TrazaColors.textSecondary,
                           ),
                         ),
                         validator: (v) {
@@ -198,7 +197,6 @@ class _LoginPageState extends State<LoginPage>
 
                       const SizedBox(height: TrazaSpacing.xxl + TrazaSpacing.sm),
 
-                      // ── Botón principal ──────────────────────────────
                       _TrazaPrimaryButton(
                         label: 'Ingresar',
                         isLoading: _isLoading,
@@ -207,15 +205,14 @@ class _LoginPageState extends State<LoginPage>
 
                       const SizedBox(height: TrazaSpacing.xl),
 
-                      // ── Divisor ──────────────────────────────────────
                       const _TrazaDivider(label: 'o'),
 
                       const SizedBox(height: TrazaSpacing.xl),
 
-                      // ── Ir a registro ────────────────────────────────
                       _TrazaSecondaryButton(
                         label: 'Crear cuenta',
-                        onTap: () => Navigator.of(context).pushNamed('/register'),
+                        onTap: () =>
+                            Navigator.of(context).pushNamed('/register'),
                       ),
 
                       const SizedBox(height: TrazaSpacing.xxxl),
@@ -259,11 +256,6 @@ class _RegisterPageState extends State<RegisterPage>
       value: 'ciudadano',
       label: 'Ciudadano',
       icon: Icons.person_outline_rounded,
-    ),
-    _RoleOption(
-      value: 'autoridad',
-      label: 'Autoridad',
-      icon: Icons.shield_outlined,
     ),
   ];
 
@@ -315,31 +307,35 @@ class _RegisterPageState extends State<RegisterPage>
   }
 
   void _showError(String message) {
+    final tt = Theme.of(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
           children: [
-            const Icon(
+            Icon(
               Icons.error_outline_rounded,
-              color: TrazaColors.danger,
+              color: tt.colorScheme.error,
               size: 16,
             ),
             const SizedBox(width: TrazaSpacing.sm),
             Expanded(
               child: Text(
                 message,
-                style: TrazaTextStyles.bodyMedium.copyWith(
-                  color: TrazaColors.textPrimary,
+                style: tt.textTheme.bodyMedium?.copyWith(
+                  color: tt.colorScheme.onSurface,
                 ),
               ),
             ),
           ],
         ),
-        backgroundColor: TrazaColors.bgCard,
+        backgroundColor: tt.cardTheme.color,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: TrazaRadius.card,
-          side: const BorderSide(color: TrazaColors.border, width: 0.5),
+          side: BorderSide(
+            color: tt.dividerTheme.color ?? TrazaColors.border,
+            width: 0.5,
+          ),
         ),
         margin: const EdgeInsets.all(TrazaSpacing.lg),
         duration: const Duration(seconds: 4),
@@ -361,25 +357,28 @@ class _RegisterPageState extends State<RegisterPage>
 
   @override
   Widget build(BuildContext context) {
+    final tt = Theme.of(context);
     return BlocListener<AuthBloc, AuthState>(
       listener: _handleState,
       child: Scaffold(
-        backgroundColor: TrazaColors.bg,
+        // ✅ Hereda scaffoldBackgroundColor del tema
         appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
+          // ✅ backgroundColor/elevation heredados de appBarTheme
           leading: GestureDetector(
             onTap: () => Navigator.of(context).pop(),
             child: Container(
               margin: const EdgeInsets.all(TrazaSpacing.sm),
               decoration: BoxDecoration(
-                color: TrazaColors.bgCard,
+                color: tt.cardTheme.color,
                 borderRadius: BorderRadius.circular(TrazaRadius.sm),
-                border: Border.all(color: TrazaColors.border, width: 0.5),
+                border: Border.all(
+                  color: tt.dividerTheme.color ?? TrazaColors.border,
+                  width: 0.5,
+                ),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.arrow_back_ios_new_rounded,
-                color: TrazaColors.textSecondary,
+                color: tt.colorScheme.onSurface.withOpacity(0.6),
                 size: 15,
               ),
             ),
@@ -401,7 +400,6 @@ class _RegisterPageState extends State<RegisterPage>
                   children: [
                     const SizedBox(height: TrazaSpacing.sm),
 
-                    // ── Header ──────────────────────────────────────
                     const _TrazaAuthHeader(
                       icon: Icons.person_add_alt_1_rounded,
                       title: 'Crear cuenta',
@@ -411,22 +409,6 @@ class _RegisterPageState extends State<RegisterPage>
 
                     const SizedBox(height: TrazaSpacing.xxxl),
 
-                    // ── Selector de rol ──────────────────────────────
-                    Text(
-                      'Tipo de cuenta',
-                      // labelSmall default color = textTertiary, ok para label
-                      style: TrazaTextStyles.labelMedium,
-                    ),
-                    const SizedBox(height: TrazaSpacing.sm),
-                    _RoleSelector(
-                      roles: _roles,
-                      selected: _selectedRole,
-                      onChanged: (v) => setState(() => _selectedRole = v),
-                    ),
-
-                    const SizedBox(height: TrazaSpacing.xl),
-
-                    // ── Email ────────────────────────────────────────
                     _TrazaField(
                       controller: _emailController,
                       label: 'Correo electrónico',
@@ -443,7 +425,6 @@ class _RegisterPageState extends State<RegisterPage>
 
                     const SizedBox(height: TrazaSpacing.md),
 
-                    // ── Contraseña ───────────────────────────────────
                     _TrazaField(
                       controller: _passwordController,
                       label: 'Contraseña',
@@ -460,7 +441,6 @@ class _RegisterPageState extends State<RegisterPage>
                               ? Icons.visibility_off_outlined
                               : Icons.visibility_outlined,
                           size: 18,
-                          color: TrazaColors.textSecondary,
                         ),
                       ),
                       validator: (v) {
@@ -472,7 +452,6 @@ class _RegisterPageState extends State<RegisterPage>
 
                     const SizedBox(height: TrazaSpacing.md),
 
-                    // ── Confirmar contraseña ─────────────────────────
                     _TrazaField(
                       controller: _confirmController,
                       label: 'Confirmar contraseña',
@@ -490,7 +469,6 @@ class _RegisterPageState extends State<RegisterPage>
                               ? Icons.visibility_off_outlined
                               : Icons.visibility_outlined,
                           size: 18,
-                          color: TrazaColors.textSecondary,
                         ),
                       ),
                       validator: (v) {
@@ -504,7 +482,6 @@ class _RegisterPageState extends State<RegisterPage>
 
                     const SizedBox(height: TrazaSpacing.xxl + TrazaSpacing.sm),
 
-                    // ── Botón principal ──────────────────────────────
                     _TrazaPrimaryButton(
                       label: 'Crear cuenta',
                       isLoading: _isLoading,
@@ -524,7 +501,7 @@ class _RegisterPageState extends State<RegisterPage>
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-//  WIDGETS INTERNOS — locales a las páginas de auth
+//  WIDGETS INTERNOS
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // ─────────────────────────────────────────────
@@ -535,15 +512,21 @@ class _TrazaAuthHeader extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
+  final bool useLogo;
 
   const _TrazaAuthHeader({
     required this.icon,
     required this.title,
     required this.subtitle,
+    this.useLogo = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final tt         = Theme.of(context);
+    final brandColor = TrazaThemeTokens.brand(context);
+    final brandSub   = TrazaThemeTokens.brandSub(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -551,27 +534,41 @@ class _TrazaAuthHeader extends StatelessWidget {
           width: 50,
           height: 50,
           decoration: BoxDecoration(
-            color: TrazaColors.brandSub,
+            gradient: useLogo
+                ? LinearGradient(
+                    colors: [brandColor, TrazaColors.brandDeep],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  )
+                : null,
+            color: useLogo ? null : brandSub,
             borderRadius: BorderRadius.circular(TrazaRadius.lg),
             border: Border.all(
-              color: TrazaColors.brand.withOpacity(0.35),
+              color: brandColor.withOpacity(0.35),
               width: 1,
             ),
+            boxShadow: useLogo ? TrazaShadows.brand : null,
           ),
-          child: Icon(icon, color: TrazaColors.brand, size: 24),
+          child: useLogo
+              ? Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: Image.asset(
+                    'assets/icons/logo.png',
+                    fit: BoxFit.contain,
+                  ),
+                )
+              : Icon(icon, color: brandColor, size: 24),
         ),
 
         const SizedBox(height: TrazaSpacing.lg + TrazaSpacing.xs),
 
-        // headlineLarge = 24px / w700 / textPrimary ✓
-        Text(title, style: TrazaTextStyles.headlineLarge),
+        Text(title, style: tt.textTheme.headlineLarge),
 
         const SizedBox(height: TrazaSpacing.xs + 2),
 
-        // bodyMedium = 13px / textSecondary — ideal para subtítulo
         Text(
           subtitle,
-          style: TrazaTextStyles.bodyMedium.copyWith(height: 1.6),
+          style: tt.textTheme.bodyMedium?.copyWith(height: 1.6),
         ),
       ],
     );
@@ -580,8 +577,9 @@ class _TrazaAuthHeader extends StatelessWidget {
 
 // ─────────────────────────────────────────────
 //  Campo de texto
-//  Hereda fill/border del inputDecorationTheme
-//  pero los sobreescribe con los tokens exactos.
+//  ✅ Hereda fill/border del inputDecorationTheme;
+//     sólo sobreescribe lo que el campo necesita
+//     (prefixIcon, suffixIcon, errorStyle).
 // ─────────────────────────────────────────────
 
 class _TrazaField extends StatelessWidget {
@@ -611,11 +609,14 @@ class _TrazaField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tt = Theme.of(context);
+    final secondaryColor = TrazaThemeTokens.textSecondary(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // labelMedium = 12px / w500 / textSecondary ✓
-        Text(label, style: TrazaTextStyles.labelMedium),
+        // ✅ Usa textTheme en lugar de TrazaTextStyles hardcodeado
+        Text(label, style: tt.textTheme.labelMedium),
         const SizedBox(height: TrazaSpacing.xs + 2),
         TextFormField(
           controller: controller,
@@ -624,57 +625,33 @@ class _TrazaField extends StatelessWidget {
           textInputAction: textInputAction,
           onFieldSubmitted: onFieldSubmitted,
           validator: validator,
-          // bodyLarge para texto ingresado: 15px / w400 / textPrimary ✓
-          style: TrazaTextStyles.bodyLarge,
+          // ✅ bodyLarge viene del textTheme ya adaptado al modo
+          style: tt.textTheme.bodyLarge,
           decoration: InputDecoration(
             hintText: hint,
-            // bodyMedium default es textSecondary, perfecto para hint
-            hintStyle: TrazaTextStyles.bodyMedium,
+            // ✅ Sólo especificamos lo que el theme no cubre:
+            //    prefixIcon, suffixIcon, errorStyle.
+            //    fill, fillColor y borders se heredan de inputDecorationTheme.
             prefixIcon: Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: TrazaSpacing.md + 2,
               ),
-              child: Icon(icon, size: 17, color: TrazaColors.textSecondary),
+              child: Icon(icon, size: 17, color: secondaryColor),
             ),
             prefixIconConstraints: const BoxConstraints(minWidth: 44),
             suffixIcon: suffixIcon != null
                 ? Padding(
                     padding: const EdgeInsets.only(right: TrazaSpacing.md),
-                    child: suffixIcon,
+                    child: IconTheme(
+                      // ✅ suffixIcon hereda color secundario adaptativo
+                      data: IconThemeData(color: secondaryColor, size: 18),
+                      child: suffixIcon!,
+                    ),
                   )
                 : null,
             suffixIconConstraints: const BoxConstraints(minWidth: 44),
-            // Sobreescribimos fillColor para usar bgCard (más elevado que bgSurface)
-            filled: true,
-            fillColor: TrazaColors.bgCard,
-            contentPadding: TrazaSpacing.inputPadding,
-            // Borders: alineados con inputDecorationTheme pero con bgCard
-            border: OutlineInputBorder(
-              borderRadius: TrazaRadius.input,
-              borderSide: const BorderSide(color: TrazaColors.border, width: 0.5),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: TrazaRadius.input,
-              borderSide: const BorderSide(color: TrazaColors.border, width: 0.5),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: TrazaRadius.input,
-              borderSide: const BorderSide(
-                color: TrazaColors.borderFocus,
-                width: 1.5,
-              ),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: TrazaRadius.input,
-              borderSide: const BorderSide(color: TrazaColors.danger, width: 1),
-            ),
-            focusedErrorBorder: OutlineInputBorder(
-              borderRadius: TrazaRadius.input,
-              borderSide: const BorderSide(color: TrazaColors.danger, width: 1),
-            ),
-            // labelSmall = 10px / w500 / textTertiary — compacto para error
-            errorStyle: TrazaTextStyles.labelSmall.copyWith(
-              color: TrazaColors.dangerText,
+            errorStyle: tt.textTheme.labelSmall?.copyWith(
+              color: tt.colorScheme.error,
             ),
           ),
         ),
@@ -700,6 +677,9 @@ class _TrazaPrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // ✅ brand es igual en dark y light, pero usamos el token por consistencia
+    final brandColor = TrazaThemeTokens.brand(context);
+
     return GestureDetector(
       onTap: isLoading ? null : onTap,
       child: AnimatedContainer(
@@ -707,9 +687,7 @@ class _TrazaPrimaryButton extends StatelessWidget {
         width: double.infinity,
         height: 50,
         decoration: BoxDecoration(
-          color: isLoading
-              ? TrazaColors.brand.withOpacity(0.6)
-              : TrazaColors.brand,
+          color: isLoading ? brandColor.withOpacity(0.6) : brandColor,
           borderRadius: TrazaRadius.button,
           boxShadow: isLoading ? [] : TrazaShadows.brand,
         ),
@@ -720,16 +698,14 @@ class _TrazaPrimaryButton extends StatelessWidget {
                   height: 18,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    valueColor:
-                        AlwaysStoppedAnimation<Color>(Colors.white),
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                   ),
                 )
               : Text(
                   label,
-                  // labelLarge = 14px / w600 / textPrimary — sobreescribimos color
-                  style: TrazaTextStyles.labelLarge.copyWith(
-                    color: Colors.white,
-                  ),
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: Colors.white,
+                      ),
                 ),
         ),
       ),
@@ -752,22 +728,23 @@ class _TrazaSecondaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tt = Theme.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: double.infinity,
         height: 50,
         decoration: BoxDecoration(
-          color: TrazaColors.bgCard,
+          // ✅ cardTheme.color = bgCard adaptativo
+          color: tt.cardTheme.color,
           borderRadius: TrazaRadius.button,
-          border: Border.all(color: TrazaColors.border, width: 0.5),
+          border: Border.all(
+            color: tt.dividerTheme.color ?? TrazaColors.border,
+            width: 0.5,
+          ),
         ),
         child: Center(
-          child: Text(
-            label,
-            // labelLarge = 14px / w600 — color por defecto textPrimary ✓
-            style: TrazaTextStyles.labelLarge,
-          ),
+          child: Text(label, style: tt.textTheme.labelLarge),
         ),
       ),
     );
@@ -784,18 +761,16 @@ class _TrazaDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tt = Theme.of(context);
+    // ✅ Divider hereda color del dividerTheme automáticamente
     return Row(
       children: [
-        const Expanded(
-          child: Divider(color: TrazaColors.border, thickness: 0.5),
-        ),
+        const Expanded(child: Divider()),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: TrazaSpacing.md),
-          child: Text(label, style: TrazaTextStyles.labelMedium),
+          child: Text(label, style: tt.textTheme.labelMedium),
         ),
-        const Expanded(
-          child: Divider(color: TrazaColors.border, thickness: 0.5),
-        ),
+        const Expanded(child: Divider()),
       ],
     );
   }
@@ -830,10 +805,15 @@ class _RoleSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tt          = Theme.of(context);
+    final brandColor  = TrazaThemeTokens.brand(context);
+    final brandSub    = TrazaThemeTokens.brandSub(context);
+    final borderColor = tt.dividerTheme.color ?? TrazaColors.border;
+
     return Row(
       children: roles.map((role) {
         final isSelected = role.value == selected;
-        final isLast = role == roles.last;
+        final isLast     = role == roles.last;
 
         return Expanded(
           child: GestureDetector(
@@ -846,12 +826,13 @@ class _RoleSelector extends StatelessWidget {
               margin: EdgeInsets.only(right: isLast ? 0 : TrazaSpacing.sm),
               padding: const EdgeInsets.symmetric(vertical: TrazaSpacing.md),
               decoration: BoxDecoration(
-                color: isSelected ? TrazaColors.brandSub : TrazaColors.bgCard,
+                // ✅ Adaptativo: brandSub o cardTheme.color
+                color: isSelected ? brandSub : tt.cardTheme.color,
                 borderRadius: TrazaRadius.card,
                 border: Border.all(
                   color: isSelected
-                      ? TrazaColors.brand.withOpacity(0.5)
-                      : TrazaColors.border,
+                      ? brandColor.withOpacity(0.5)
+                      : borderColor,
                   width: isSelected ? 1.0 : 0.5,
                 ),
               ),
@@ -861,17 +842,16 @@ class _RoleSelector extends StatelessWidget {
                     role.icon,
                     size: 20,
                     color: isSelected
-                        ? TrazaColors.brand
-                        : TrazaColors.textSecondary,
+                        ? brandColor
+                        : TrazaThemeTokens.textSecondary(context),
                   ),
                   const SizedBox(height: TrazaSpacing.xs + 2),
                   Text(
                     role.label,
-                    // titleSmall = 13px / w600 / textPrimary
-                    style: TrazaTextStyles.titleSmall.copyWith(
+                    style: tt.textTheme.titleSmall?.copyWith(
                       color: isSelected
-                          ? TrazaColors.brand
-                          : TrazaColors.textSecondary,
+                          ? brandColor
+                          : TrazaThemeTokens.textSecondary(context),
                     ),
                   ),
                 ],

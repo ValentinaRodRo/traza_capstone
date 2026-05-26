@@ -1,251 +1,109 @@
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import Badge from './Badge';
 
-const borderColor = {
-  'Sin atender': '#E24B4A',
-  'En proceso': '#EF9F27',
-  'Resuelto': '#1D9E75'
+const SEVERITY_COLOR = {
+  bajo:    { bg: '#ECFDF5', color: '#065F46' },
+  medio:   { bg: '#FFFBEB', color: '#92400E' },
+  alto:    { bg: '#FFF7ED', color: '#C2410C' },
+  critico: { bg: '#FEF2F2', color: '#B91C1C' },
 };
 
-const confianzaLabel = {
-  alta: '★ Ciudadano confiable',
-  'sin-registro': 'Sin registro',
-  nueva: 'Primera vez'
-};
-
-const confianzaStyle = {
-  alta: { bg: '#EAF3DE', color: '#166534' },
-
-  'sin-registro': {
-    bg: '#F1EFE8',
-    color: '#5F5E5A'
-  },
-
-  nueva: {
-    bg: '#EEEDFE',
-    color: '#3C3489'
-  },
-};
-
-export default function ReportCard({
-  reporte,
-  aiSeverity,
-  aiConfidence
-}) {
-
-  const navigate = useNavigate();
-
-  const cs =
-    confianzaStyle[reporte.confianza]
-    || confianzaStyle.nueva;
+export default function ReportCard({ reporte, onStatusChange }) {
+  const [expanded, setExpanded] = useState(false);
+  const sev = SEVERITY_COLOR[reporte.aiSeverity] || SEVERITY_COLOR.medio;
 
   return (
-
-    <div
-      onClick={() =>
-        navigate(
-          `/detalle/${
-            reporte.id.replace('#', '')
-          }`
-        )
-      }
-
-      style={{
-        background: '#fff',
-
-        borderRadius: 12,
-
-        padding: '14px 16px',
-
-        borderLeft:
-          `4px solid ${
-            borderColor[reporte.estado]
-            || '#ccc'
-          }`,
-
-        border: '1px solid var(--border)',
-
-        cursor: 'pointer',
-
-        marginBottom: 10,
-
-        transition: 'box-shadow .15s',
-      }}
-
-      onMouseEnter={e =>
-        e.currentTarget.style.boxShadow =
-        '0 4px 16px rgba(0,0,0,.08)'
-      }
-
-      onMouseLeave={e =>
-        e.currentTarget.style.boxShadow =
-        'none'
-      }
-    >
-
-      <div
-        style={{
-          display: 'flex',
-
-          justifyContent:
-            'space-between',
-
-          alignItems: 'flex-start'
-        }}
-      >
-
-        <div>
-
-          <div
-            style={{
-              display: 'flex',
-
-              gap: 6,
-
-              alignItems: 'center',
-
-              marginBottom: 4
-            }}
-          >
-
-            <Badge estado={reporte.estado} />
-
-            <span
-              style={{
-                fontSize: 11,
-
-                padding: '2px 8px',
-
-                borderRadius: 10,
-
-                background: cs.bg,
-
-                color: cs.color
-              }}
-            >
-
-              {
-                confianzaLabel[
-                  reporte.confianza
-                ]
-              }
-
-            </span>
-
+    <div style={s.card}>
+      <div style={s.row} onClick={() => setExpanded(v => !v)}>
+        {/* Left */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={s.topRow}>
+            <span style={s.code}>{reporte.tracking_code || reporte.id}</span>
+            <Badge text={reporte.status || reporte.estado} />
+            {reporte.aiSeverity && (
+              <span style={{ ...s.aiTag, ...sev }}>
+                IA: {reporte.aiSeverity} ({Math.round((reporte.aiConfidence || 0) * 100)}%)
+              </span>
+            )}
           </div>
-
-          <div
-            style={{
-              fontWeight: 500,
-
-              fontSize: 14
-            }}
-          >
-
-            {reporte.tipo}
-            {" — "}
-            {reporte.ubicacion}
-
+          <div style={s.tipo}>{reporte.incident_type || reporte.tipo}</div>
+          <div style={s.desc}>{reporte.description || reporte.desc}</div>
+          <div style={s.meta}>
+            📍 {reporte.ubicacion || 'Ubicación reportada'} · 🕐 {reporte.hora || 'Reciente'}
+            {reporte.anonymous !== undefined && (
+              <span style={{ marginLeft: 8, color: '#9CA3AF' }}>
+                · {reporte.anonymous ? '🎭 Anónimo' : '✅ Registrado'}
+              </span>
+            )}
           </div>
-
-          <div
-            style={{
-              fontSize: 12,
-
-              color:
-                'var(--text-secondary)',
-
-              marginTop: 2
-            }}
-          >
-
-            {reporte.hora}
-            {" · "}
-            {reporte.id}
-
-          </div>
-
         </div>
 
-        <span
-          style={{
-            fontSize: 13,
-
-            color: '#185FA5',
-
-            marginTop: 4
-          }}
+        {/* Arrow */}
+        <svg
+          width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="#9CA3AF" strokeWidth="2"
+          style={{ transform: expanded ? 'rotate(90deg)' : 'rotate(0)', transition: '.2s', flexShrink: 0 }}
         >
-
-          Ver →
-
-        </span>
-
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>
       </div>
 
-      <div
-        style={{
-          fontSize: 13,
-
-          color:
-            'var(--text-secondary)',
-
-          marginTop: 6
-        }}
-      >
-
-        {reporte.desc}
-
-      </div>
-
-      {/* AI SECTION */}
-
-      <div
-        style={{
-          marginTop: 10,
-
-          padding: 10,
-
-          borderRadius: 10,
-
-          background: '#F4F8FF',
-
-          fontSize: 12,
-        }}
-      >
-
-        <div>
-
-          <strong>
-            Severidad IA:
-          </strong>
-
-          {" "}
-
-          {
-            aiSeverity
-            || "Analizando..."
-          }
-
+      {/* Expanded */}
+      {expanded && (
+        <div style={s.expanded}>
+          <div style={s.expandedGrid}>
+            <div>
+              <div style={s.expandLabel}>Observaciones</div>
+              <div style={s.expandVal}>{reporte.obs || reporte.comment || '—'}</div>
+            </div>
+            {reporte.aiRiskScore !== undefined && (
+              <div>
+                <div style={s.expandLabel}>Puntaje de riesgo IA</div>
+                <div style={{ ...s.expandVal, color: '#0C447C', fontWeight: 700 }}>
+                  {Math.round(reporte.aiRiskScore * 100)}%
+                </div>
+              </div>
+            )}
+          </div>
+          <div style={s.actions}>
+            <Link
+              to={`/detalle/${reporte.tracking_code || reporte.id?.replace('#', '')}`}
+              style={s.btnPrimary}
+            >
+              Ver detalle y responder →
+            </Link>
+          </div>
         </div>
-
-        <div style={{ marginTop: 4 }}>
-
-          <strong>
-            Confianza IA:
-          </strong>
-
-          {" "}
-
-          {
-            aiConfidence
-            || "--"
-          }
-
-        </div>
-
-      </div>
-
+      )}
     </div>
   );
 }
+
+const s = {
+  card: {
+    background: 'white', borderRadius: 12, border: '1px solid #E5E7EB',
+    marginBottom: 10, overflow: 'hidden',
+  },
+  row: {
+    display: 'flex', alignItems: 'flex-start', gap: 12,
+    padding: '14px 16px', cursor: 'pointer',
+  },
+  topRow: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 },
+  code: { fontSize: 12, fontWeight: 700, color: '#9CA3AF', fontFamily: 'monospace' },
+  tipo: { fontSize: 14, fontWeight: 600, color: '#111827', marginBottom: 4 },
+  desc: { fontSize: 13, color: '#4B5563', lineHeight: 1.5, marginBottom: 6 },
+  meta: { fontSize: 12, color: '#9CA3AF' },
+  aiTag: { fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 20 },
+  expanded: { padding: '0 16px 14px', borderTop: '1px solid #F3F4F6' },
+  expandedGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, paddingTop: 12, marginBottom: 12 },
+  expandLabel: { fontSize: 11, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 },
+  expandVal: { fontSize: 13, color: '#374151' },
+  actions: { display: 'flex', gap: 8 },
+  btnPrimary: {
+    display: 'inline-flex', alignItems: 'center', gap: 6,
+    padding: '8px 16px', background: '#0C447C', color: 'white',
+    border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600,
+    cursor: 'pointer', textDecoration: 'none',
+  },
+};

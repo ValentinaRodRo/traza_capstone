@@ -1,63 +1,97 @@
-import { useState } from 'react';
 import TopBar from '../components/layout/TopBar';
 
+const PATRULLAS = [
+  { id: 'P-01', agentes: ['Sgto. Ramírez', 'Ptl. Torres'],   zona: 'Parque Central',  estado: 'Activa',   turno: 'Día (6AM–6PM)'  },
+  { id: 'P-02', agentes: ['Ptl. Gómez', 'Ptl. Herrera'],     zona: 'Zona Comercial',  estado: 'Activa',   turno: 'Día (6AM–6PM)'  },
+  { id: 'P-03', agentes: ['Sgto. Vargas', 'Ptl. Moreno'],    zona: 'La Capilla',      estado: 'Activa',   turno: 'Día (6AM–6PM)'  },
+  { id: 'P-04', agentes: ['Ptl. Castro', 'Ptl. Díaz'],       zona: 'Vía Cajicá',      estado: 'Descanso', turno: 'Noche (6PM–6AM)' },
+  { id: 'P-05', agentes: ['Intdt. López'],                    zona: 'Comando Central', estado: 'Comando',  turno: 'Día (6AM–6PM)'  },
+];
+
+const ESTADO_STYLE = {
+  Activa:   { bg: '#ECFDF5', color: '#065F46', dot: '#1D9E75' },
+  Descanso: { bg: '#F3F4F6', color: '#374151', dot: '#9CA3AF' },
+  Comando:  { bg: '#EEF4FF', color: '#1E40AF', dot: '#3D6FE8' },
+};
+
 export default function Policial() {
-  const [saved, setSaved] = useState(false);
-
-  function guardar() {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
-  }
-
-  const inputStyle = {
-    width: '100%', padding: '10px 12px',
-    border: '1px solid var(--border)', borderRadius: 8,
-    fontSize: 13, background: '#fff',
-  };
-  const labelStyle = { fontSize: 13, color: 'var(--text-secondary)', display: 'block', marginBottom: 6, marginTop: 14 };
-
   return (
-    <div>
-      <TopBar title="Crear reporte policial" />
-      <div style={{ padding: 28, maxWidth: 600 }}>
-        <div style={{ background: '#E6F1FB', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#185FA5', marginBottom: 20 }}>
-          Vinculado a reporte ciudadano · Sin registro de identidad
+    <div style={{ background: '#F5F7FC', minHeight: '100vh' }}>
+      <TopBar
+        title="Gestión policial"
+        subtitle="Asignación de patrullas · Est. Policía Chía"
+      />
+      <div style={{ padding: 28 }}>
+        {/* Header info */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginBottom: 28 }}>
+          {[
+            { label: 'Patrullas activas', val: PATRULLAS.filter(p => p.estado === 'Activa').length, color: '#1D9E75', icon: '🚔' },
+            { label: 'Total personal', val: PATRULLAS.reduce((s, p) => s + p.agentes.length, 0), color: '#0C447C', icon: '👮' },
+            { label: 'Zonas cubiertas', val: new Set(PATRULLAS.filter(p => p.estado === 'Activa').map(p => p.zona)).size, color: '#3D6FE8', icon: '🗺' },
+          ].map(k => (
+            <div key={k.label} style={{ background: 'white', borderRadius: 14, padding: '18px 20px', border: '1px solid #E5E7EB', display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div style={{ width: 48, height: 48, borderRadius: 12, background: k.color + '15', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
+                {k.icon}
+              </div>
+              <div>
+                <div style={{ fontSize: 28, fontWeight: 700, color: k.color, letterSpacing: -1 }}>{k.val}</div>
+                <div style={{ fontSize: 13, color: '#6B7280' }}>{k.label}</div>
+              </div>
+            </div>
+          ))}
         </div>
 
-        <div style={{ background: '#fff', borderRadius: 12, padding: 24, border: '1px solid var(--border)' }}>
-          <label style={labelStyle}>Número de reporte policial</label>
-          <input style={{ ...inputStyle, background: 'var(--bg)' }} defaultValue="RP-CHI-2026-0312" readOnly />
+        {/* Patrol table */}
+        <div style={{ background: 'white', borderRadius: 14, border: '1px solid #E5E7EB', overflow: 'hidden' }}>
+          <div style={{ padding: '18px 22px', borderBottom: '1px solid #F3F4F6' }}>
+            <div style={{ fontWeight: 700, fontSize: 15, color: '#111827' }}>Despliegue de patrullas</div>
+          </div>
 
-          <label style={labelStyle}>Patrulla asignada</label>
-          <select style={inputStyle}>
-            <option>Patrulla 01 — Centro</option>
-            <option>Patrulla 03 — Norte</option>
-            <option>Patrulla 05 — Sur</option>
-          </select>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ background: '#F9FAFB' }}>
+                {['Patrulla', 'Agentes', 'Zona asignada', 'Turno', 'Estado'].map(h => (
+                  <th key={h} style={{ padding: '10px 18px', fontSize: 11, fontWeight: 700, color: '#6B7280', textAlign: 'left', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {PATRULLAS.map((p, i) => {
+                const st = ESTADO_STYLE[p.estado] || ESTADO_STYLE.Descanso;
+                return (
+                  <tr key={p.id} style={{ borderTop: '1px solid #F3F4F6', background: i % 2 === 0 ? 'white' : '#FAFAFA' }}>
+                    <td style={{ padding: '12px 18px', fontFamily: 'monospace', fontSize: 13, fontWeight: 700, color: '#0C447C' }}>
+                      {p.id}
+                    </td>
+                    <td style={{ padding: '12px 18px' }}>
+                      {p.agentes.map(a => (
+                        <div key={a} style={{ fontSize: 13, color: '#374151' }}>{a}</div>
+                      ))}
+                    </td>
+                    <td style={{ padding: '12px 18px', fontSize: 13, color: '#4B5563' }}>{p.zona}</td>
+                    <td style={{ padding: '12px 18px', fontSize: 12, color: '#6B7280' }}>{p.turno}</td>
+                    <td style={{ padding: '12px 18px' }}>
+                      <span style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 6,
+                        padding: '4px 10px', borderRadius: 20,
+                        background: st.bg, color: st.color, fontSize: 12, fontWeight: 600,
+                      }}>
+                        <div style={{ width: 7, height: 7, borderRadius: '50%', background: st.dot }} />
+                        {p.estado}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
 
-          <label style={labelStyle}>Descripción oficial</label>
-          <textarea style={{ ...inputStyle, resize: 'vertical' }} rows={3} placeholder="Descripción policial del incidente..." />
-
-          <label style={labelStyle}>Estado del caso</label>
-          <select style={inputStyle}>
-            <option>En investigación</option>
-            <option>Atendido en sitio</option>
-            <option>Cerrado</option>
-          </select>
-
-          <label style={labelStyle}>Mensaje de retroalimentación al ciudadano</label>
-          <textarea style={{ ...inputStyle, resize: 'vertical' }} rows={2} placeholder="El ciudadano verá este mensaje..." />
-
-          {saved && (
-            <div style={{ background: '#EAF3DE', color: '#3B6D11', padding: '10px 14px', borderRadius: 8, fontSize: 13, marginTop: 14 }}>
-              Reporte policial guardado y ciudadano notificado.
-            </div>
-          )}
-
-          <button onClick={guardar}
-            style={{ marginTop: 20, width: '100%', padding: '12px', background: '#0C447C', color: 'white', border: 'none', borderRadius: 8, fontSize: 14, cursor: 'pointer', fontWeight: 500 }}>
-            Guardar reporte policial
-          </button>
+        {/* Note */}
+        <div style={{ marginTop: 20, background: '#EEF4FF', borderRadius: 12, padding: '14px 18px', border: '1px solid #BFDBFE', fontSize: 13, color: '#1E40AF' }}>
+          <strong>Nota:</strong> La asignación de patrullas a reportes se realiza desde el panel de detalle de cada reporte. Las patrullas aquí mostradas son de referencia operacional.
         </div>
       </div>
     </div>

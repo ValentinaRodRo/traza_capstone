@@ -106,13 +106,33 @@ def get_reports(
 
     return response
 
-def get_user_reports(
-    db: Session,
-    user_id: int
-):
-    return db.query(Report).filter(
+def get_user_reports(db: Session, user_id: int):
+    reports = db.query(Report).filter(
         Report.user_id == user_id
-    ).all()
+    ).order_by(Report.created_at.desc()).all()
+
+    result = []
+    for report in reports:
+        # Trae el último comentario de autoridad del historial
+        last_history = (
+            db.query(ReportHistory)
+            .filter(ReportHistory.report_id == report.id)
+            .order_by(ReportHistory.id.desc())
+            .first()
+        )
+        result.append({
+            "tracking_code": report.tracking_code,
+            "incident_type": report.incident_type,
+            "description":   report.description,
+            "latitude":      report.latitude,
+            "longitude":     report.longitude,
+            "anonymous":     report.anonymous,
+            "status":        report.status,
+            "created_at":    report.created_at,
+            "officer_note":  last_history.comment if last_history else None,
+        })
+
+    return result
 
 def update_report_status(
     db: Session,

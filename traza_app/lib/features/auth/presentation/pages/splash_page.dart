@@ -6,11 +6,6 @@ import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
 
-// ═══════════════════════════════════════════════════════════════════════════════
-//  SPLASH PAGE
-//  Verifica sesión local y redirige a /home o /login según el estado.
-// ═══════════════════════════════════════════════════════════════════════════════
-
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
 
@@ -48,9 +43,7 @@ class _SplashPageState extends State<SplashPage>
     _animController.forward();
 
     Future.delayed(const Duration(milliseconds: 600), () {
-      if (mounted) {
-        context.read<AuthBloc>().add(CheckAuthEvent());
-      }
+      if (mounted) context.read<AuthBloc>().add(CheckAuthEvent());
     });
   }
 
@@ -70,10 +63,14 @@ class _SplashPageState extends State<SplashPage>
 
   @override
   Widget build(BuildContext context) {
+    final tt         = Theme.of(context);
+    final brandColor = TrazaThemeTokens.brand(context);
+    final brandSub   = TrazaThemeTokens.brandSub(context);
+
     return BlocListener<AuthBloc, AuthState>(
       listener: _handleState,
       child: Scaffold(
-        backgroundColor: TrazaColors.bg,
+        // ✅ scaffoldBackgroundColor del tema
         body: Center(
           child: FadeTransition(
             opacity: _fadeAnim,
@@ -82,32 +79,33 @@ class _SplashPageState extends State<SplashPage>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // ── Logo ────────────────────────────────────────────
                   Container(
                     width: 72,
                     height: 72,
                     decoration: BoxDecoration(
-                      color: TrazaColors.brandSub,
+                      color: brandSub,
                       borderRadius: BorderRadius.circular(TrazaRadius.xl),
                       border: Border.all(
-                        color: TrazaColors.brand.withOpacity(0.35),
+                        color: brandColor.withOpacity(0.35),
                         width: 1,
                       ),
                       boxShadow: TrazaShadows.brand,
                     ),
-                    child: const Icon(
-                      Icons.location_on_rounded,
-                      color: TrazaColors.brand,
-                      size: 34,
+                    child: Padding(
+                      padding: const EdgeInsets.all(14),
+                      child: Image.asset(
+                        'assets/icons/logo.png',
+                        fit: BoxFit.contain,
+                      ),
                     ),
                   ),
 
                   const SizedBox(height: TrazaSpacing.xl),
 
-                  // ── Nombre ──────────────────────────────────────────
+                  // ✅ textTheme adaptativo
                   Text(
                     'Traza',
-                    style: TrazaTextStyles.headlineLarge.copyWith(
+                    style: tt.textTheme.headlineLarge?.copyWith(
                       letterSpacing: -0.5,
                     ),
                   ),
@@ -116,19 +114,18 @@ class _SplashPageState extends State<SplashPage>
 
                   Text(
                     'Chía, Cundinamarca',
-                    style: TrazaTextStyles.labelSmall,
+                    style: tt.textTheme.labelSmall,
                   ),
 
                   const SizedBox(height: TrazaSpacing.xxxl + TrazaSpacing.lg),
 
-                  // ── Loader ──────────────────────────────────────────
                   SizedBox(
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
                       valueColor: AlwaysStoppedAnimation<Color>(
-                        TrazaColors.brand.withOpacity(0.7),
+                        brandColor.withOpacity(0.7),
                       ),
                     ),
                   ),
